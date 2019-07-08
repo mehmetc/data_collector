@@ -14,7 +14,7 @@ module DataCollector
       prg = self
       if block_given?
         a = Class.new do
-          include DataCollect::Core
+          include DataCollector::Core
         end.new
 
         yield a
@@ -34,6 +34,6 @@ module DataCollector
     end
 
     private
-    include DataCollect::Core
+    include DataCollector::Core
   end
 end

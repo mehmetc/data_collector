@@ -11,7 +11,7 @@ module DataCollector
     # example:  input.from_uri("http://www.libis.be")
     #           input.from_uri("file://hello.txt")
     def input
-      @input ||= DataCollect::Input.new
+      @input ||= DataCollector::Input.new
     end
 
     # Output is an object you can store data that needs to be written to an output stream
