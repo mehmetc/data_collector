@@ -52,6 +52,15 @@ Into a tar file stored in data
     output.to_file("test.erb", "my_data.tar.gz")
 ```    
 
+Other output methods
+```ruby
+output.raw
+output.clear
+output.to_tmp_file("test.erb", "tmp_data")
+output.to_jsonfile(data, "test")
+output.flatten
+```
+
 Into a temp directory
 ```ruby
     output.to_tmp_file("test.erb","directory")
