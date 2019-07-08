@@ -1,9 +1,84 @@
 # DataCollector
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/data_collector`. To experiment with that code, run `bin/console` for an interactive prompt.
+Convinience objects to Extract, Transform and Load your data.
 
-TODO: Delete this and the text above, and describe your gem
+#### input    
+Read input from an URI
+example:
+```ruby  
+    input.from_uri("http://www.libis.be")
+    input.from_uri("file://hello.txt")
+```
 
+ ### output 
+Output is an object you can store data that needs to be written to an output stream.  
+```ruby  
+    output[:name] = 'John'
+    output[:last_name] = 'Doe'
+```    
+
+Write output to a file, string use an ERB file as a template
+example:
+___test.erb___
+```ruby
+<names>
+    <combined><%= data[:name] %> <%= data[:last_name] %></combined>
+    <%= print data, :name, :first_name %>
+    <%= print data, :last_name %>
+</names>
+```
+will produce
+```ruby
+   <names>
+     <combined>John Doe</combined>
+     <first_name>John</first_name>
+     <last_name>Doe</last_name>
+   </names>
+```
+
+Into a variable
+```ruby
+    result = output.to_s("test.erb")
+```  
+
+Into a file stored in records dir
+```ruby
+    output.to_file("test.erb")
+``` 
+
+Into a tar file stored in data
+```ruby
+    output.to_file("test.erb", "my_data.tar.gz")
+```    
+
+Into a temp directory
+```ruby
+    output.to_tmp_file("test.erb","directory")
+```    
+   
+#### filter
+filter data from a hash using [JsonPath](http://goessner.net/articles/JsonPath/index.html)
+
+```ruby
+    filtered_data = filter(data, "$..metadata.record")
+```
+
+#### config
+config is an object that points to "config.yml" you can read and/or store data to this object.
+
+___read___    
+```ruby
+    config[:active]
+```    
+___write___
+```ruby
+    config[:active] = false
+```    
+#### log
+Log to stdout
+```ruby
+    log("hello world")
+```
 ## Installation
 
 Add this line to your application's Gemfile:
