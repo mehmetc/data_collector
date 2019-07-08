@@ -1,6 +1,5 @@
 # DataCollector
-
-Convinience objects to Extract, Transform and Load your data.
+Convinience module to Extract, Transform and Load your data.
 
 #### input    
 Read input from an URI
@@ -9,6 +8,8 @@ example:
     input.from_uri("http://www.libis.be")
     input.from_uri("file://hello.txt")
 ```
+
+Inputs can be JSON, XML or CSV
 
  ### output 
 Output is an object you can store data that needs to be written to an output stream.  
@@ -79,6 +80,56 @@ Log to stdout
 ```ruby
     log("hello world")
 ```
+
+
+## Example
+Input data ___test.csv___
+```csv
+sequence, data
+1, apple
+2, banana
+3, peach
+```
+
+Output template ___test.erb___
+```ruby
+ <data>
+ <% data[:record].each do |d| %>
+    <record sequence="<%= d[:sequence] %>">
+      <%= print d, :data %>
+    </record>
+ <% end %>
+</data>
+```
+
+```ruby
+require 'data_collect'
+include DataCollect::Core
+
+data = input.from_uri('file://test.csv')
+data.map{ |m| m[:sequence] *=2; m }
+
+output[:record]=data
+
+puts output.to_s('test.erb')
+```
+
+Should give as output
+```xml
+<data>
+    <record sequence="11">
+        <data> apple</data>    
+    </record>
+    <record sequence="22">
+        <data> banana</data>    
+    </record>
+    <record sequence="33">
+        <data> peach</data>    
+    </record>
+</data>
+```
+
+
 ## Installation
 
 Add this line to your application's Gemfile:
