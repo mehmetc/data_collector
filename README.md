@@ -103,8 +103,8 @@ Output template ___test.erb___
 ```
 
 ```ruby
-require 'data_collect'
-include DataCollect::Core
+require 'data_collector'
+include DataCollector::Core
 
 data = input.from_uri('file://test.csv')
 data.map{ |m| m[:sequence] *=2; m }
