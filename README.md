@@ -73,6 +73,38 @@ filter data from a hash using [JsonPath](http://goessner.net/articles/JsonPath/i
     filtered_data = filter(data, "$..metadata.record")
 ```
 
+#### rules
+
+rules allows you to define a simple structure to run against a JSONPath filter
+
+A rule is made up of a Hash the key is the map key field its value is a Hash with a JSONPath filter and options to apply a convert method on the filtered results.
+Available convert methods are: time, map, each, call, suffix
+  - time: Parses a given time/date string into a Time object
+  - map: applies a mapping to a filter
+  - suffix: adds a suffix to a result
+  - call: executes a lambda on the filter
+  - each: runs a lambda on each row of a filter
+
+ example:
+```ruby 
+ my_rules = {
+   'identifier' => {"filter" => '$..id'},
+   'language' => {'filter' => '$..lang',
+                  'options' => {'convert' => 'map',
+                                'map' => {'nl' => 'dut', 'fr' => 'fre', 'de' => 'ger', 'en' => 'eng'}
+                               }
+                 },
+   'subject' => {'filter' => '$..keywords',
+                 options' => {'convert' => 'each',
+                              'lambda' => lambda {|d| d.split(',')}
+                             }
+                },
+   'creationdate' => {'filter' => '$..published_date', 'convert' => 'time'}
+ }
+
+rules.run(my_rules, record, output)
+```    
+
 #### config
 config is an object that points to "config.yml" you can read and/or store data to this object.
 

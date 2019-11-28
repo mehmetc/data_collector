@@ -3,6 +3,7 @@ require 'jsonpath'
 
 require_relative 'input'
 require_relative 'output'
+require_relative 'rules'
 require_relative 'config_file'
 
 module DataCollector
@@ -46,6 +47,37 @@ module DataCollector
       @output ||= Output.new
     end
 
+    #You can apply rules to input
+    # A rule is made up of a Hash the key is the map key field its value is a Hash with a JSONPath filter and
+    # options to apply a convert method on the filtered results.
+    #
+    # available convert methods are: time, map, each, call, suffix
+    #  - time: Parses a given time/date string into a Time object
+    #  - map: applies a mapping to a filter
+    #  - suffix: adds a suffix to a result
+    #  - call: executes a lambda on the filter
+    #  - each: runs a lambda on each row of a filter
+    #
+    # example:
+    # my_rules = {
+    #   'identifier' => {"filter" => '$..id'},
+    #   'language' => {'filter' => '$..lang',
+    #                  'options' => {'convert' => 'map',
+    #                                'map' => {'nl' => 'dut', 'fr' => 'fre', 'de' => 'ger', 'en' => 'eng'}
+    #                               }
+    #                 },
+    #   'subject' => {'filter' => '$..keywords',
+    #                 options' => {'convert' => 'each',
+    #                              'lambda' => lambda {|d| d.split(',')}
+    #                             }
+    #                },
+    #   'creationdate' => {'filter' => '$..published_date', 'convert' => 'time'}
+    # }
+    # rules.run(my_rules, input, output)
+    def rules
+      @rules ||= Rules.new
+    end
+
     # evaluator http://jsonpath.com/
     # uitleg http://goessner.net/articles/JsonPath/index.html
     def filter(data, filter_path)
@@ -72,5 +104,7 @@ module DataCollector
     def log(message)
       @logger.info(message)
     end
+
   end
+
 end
