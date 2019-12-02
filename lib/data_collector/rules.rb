@@ -18,7 +18,9 @@ module DataCollector
       end
 
       to_record.each do |element|
-        element = element.delete_if{||}
+        element = element.delete_if do |k, v|
+          v != false && (v.nil? || v.empty?)
+        end
       end
     end
 
@@ -37,13 +39,19 @@ module DataCollector
           to_record << {map_to_key.to_sym => result}
         end
       else
-        to_record << {map_to_key.to_sym => get_value_for(map_to_key, rule['filter'], from_record, rule['options'])}
+        result = get_value_for(map_to_key, rule['filter'], from_record, rule['options'])
+        return if result && result.empty?
+        to_record << {map_to_key.to_sym => result}
       end
     end
 
     def get_value_for(tag_key, filter_path, record, options = {})
       data = nil
       if record
+        if filter_path.is_a?(Array) && !record.is_a?(Array)
+          record = [record]
+        end
+
         data = Core::filter(record, filter_path)
 
         if data && options

@@ -42,9 +42,8 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "nori", "~> 2.6"
   spec.add_runtime_dependency "http", "~> 4.1"
   spec.add_runtime_dependency "mime-types", "~> 3.2"
-  spec.add_runtime_dependency "minitar", "= 0.8"
+  spec.add_runtime_dependency "minitar", "= 0.9"
   spec.add_runtime_dependency "activesupport", "~> 5.2"
-  spec.add_runtime_dependency "redis", "~> 4.1"
 
   spec.add_development_dependency "bundler", "~> 2.0"
   spec.add_development_dependency "rake", "~> 10.0"

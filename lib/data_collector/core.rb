@@ -1,5 +1,6 @@
 # encoding: utf-8
 require 'jsonpath'
+require 'logger'
 
 require_relative 'input'
 require_relative 'output'
@@ -93,6 +94,7 @@ module DataCollector
 
       filtered
     rescue StandardError => e
+      @logger ||= Logger.new(STDOUT)
       @logger.error("#{filter_path} failed: #{e.message}")
       []
     end
@@ -102,6 +104,7 @@ module DataCollector
     end
 
     def log(message)
+      @logger ||= Logger.new(STDOUT)
       @logger.info(message)
     end
 

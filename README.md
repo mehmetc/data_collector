@@ -9,7 +9,7 @@ example:
     input.from_uri("file://hello.txt")
 ```
 
-Inputs can be JSON, XML or CSV
+Inputs can be JSON, XML or CSV or XML in a TAR.GZ file
 
  ### output 
 Output is an object you can store data that needs to be written to an output stream.  

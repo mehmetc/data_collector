@@ -64,12 +64,15 @@ module DataCollector
 
     def clear
       @data = {}
-      GC.start(full_mark: true, immediate_sweep: true)
+      #GC.start(full_mark: true, immediate_sweep: true)
+      GC.start
     end
 
 
-    def to_s(erb_file)
+    def to_s(erb_file = nil)
       data = @data
+
+      return data.to_s if erb_file.nil?
 
       def print(data, symbol, to_symbol = nil)
         tag = to_symbol ? to_symbol.to_s : symbol.to_s
