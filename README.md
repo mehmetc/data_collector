@@ -1,5 +1,5 @@
 # DataCollector
-Convinience module to Extract, Transform and Load your data.
+Convenience module to Extract, Transform and Load your data.
 
 #### input    
 Read input from an URI
