@@ -1,13 +1,27 @@
 # DataCollector
-Convinience module to Extract, Transform and Load your data.
+Convenience module to Extract, Transform and Load your data.
 
 #### input    
 Read input from an URI
+
+**Public methods**
+```ruby
+  from_uri(source, options = {:raw, :content_type})
+```
+- source: an uri with a scheme of http, https, file
+- options:
+    - raw: _boolean_ do not parse
+    - content_type: _string_ force a content_type if the 'Content-Type' returned by the http server is incorrect 
+
 example:
 ```ruby  
     input.from_uri("http://www.libis.be")
     input.from_uri("file://hello.txt")
+    input.from_uri("http://www.libis.be/record.jsonld", content_type: 'application/ld+json')
 ```
+
+
+
 
 Inputs can be JSON, XML or CSV or XML in a TAR.GZ file
 
@@ -67,19 +81,18 @@ Into a temp directory
 ```    
    
 #### filter
-filter data from a hash using [JsonPath](http://goessner.net/articles/JsonPath/index.html)
+filter data from a hash using [JSONPath](http://goessner.net/articles/JsonPath/index.html)
 
 ```ruby
     filtered_data = filter(data, "$..metadata.record")
 ```
 
 #### rules
-
-rules allows you to define a simple structure to run against a JSONPath filter
+Allows you to define a simple lambda structure to run against a JSONPath filter
 
 A rule is made up of a Hash the key is the map key field its value is a Hash with a JSONPath filter and options to apply a convert method on the filtered results.
 Available convert methods are: time, map, each, call, suffix
-  - time: Parses a given time/date string into a Time object
+  - time: parses a given time/date string into a Time object
   - map: applies a mapping to a filter
   - suffix: adds a suffix to a result
   - call: executes a lambda on the filter

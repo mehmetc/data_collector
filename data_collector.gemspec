@@ -9,8 +9,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Mehmet Celik"]
   spec.email         = ["mehmet@celik.be"]
 
-  spec.summary       = %q{ETL library}
-  spec.description   = %q{INPUT, FILTER, OUTPUT data}
+  spec.summary       = %q{ETL helper library}
+  spec.description   = %q{INPUT, FILTER, OUTPUT data with RULES and code}
   spec.homepage      = "https://github.com/mehmetc/data_collector"
   spec.license       = "MIT"
 
@@ -44,6 +44,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "mime-types", "~> 3.2"
   spec.add_runtime_dependency "minitar", "= 0.9"
   spec.add_runtime_dependency "activesupport", "~> 5.2"
+  spec.add_runtime_dependency "json-ld", "~> 3.1"
 
   spec.add_development_dependency "bundler", "~> 2.0"
   spec.add_development_dependency "rake", "~> 10.0"
