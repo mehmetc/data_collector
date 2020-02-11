@@ -91,12 +91,13 @@ filter data from a hash using [JSONPath](http://goessner.net/articles/JsonPath/i
 Allows you to define a simple lambda structure to run against a JSONPath filter
 
 A rule is made up of a Hash the key is the map key field its value is a Hash with a JSONPath filter and options to apply a convert method on the filtered results.
-Available convert methods are: time, map, each, call, suffix
+Available convert methods are: time, map, each, call, suffix, text
   - time: parses a given time/date string into a Time object
   - map: applies a mapping to a filter
   - suffix: adds a suffix to a result
   - call: executes a lambda on the filter
   - each: runs a lambda on each row of a filter
+  - text: passthrough method. Returns value unchanged
 
  example:
 ```ruby 

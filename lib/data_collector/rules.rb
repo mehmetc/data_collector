@@ -25,22 +25,24 @@ module DataCollector
     end
 
     private
+
     def apply_rule(map_to_key, rule, from_record, to_record)
-      if rule.has_key?('options') && rule['options'].has_key?('convert') && rule['options']['convert'].eql?('each')
+      if rule.has_key?('text')
+        to_record << { map_to_key.to_sym => rule['text'] }
+      elsif rule.has_key?('options') && rule['options'].has_key?('convert') && rule['options']['convert'].eql?('each')
         result = get_value_for(map_to_key, rule['filter'], from_record, rule['options'])
 
         if result.is_a?(Array)
-
           result.each do |m|
             to_record << {map_to_key.to_sym => m}
           end
-
         else
           to_record << {map_to_key.to_sym => result}
         end
       else
         result = get_value_for(map_to_key, rule['filter'], from_record, rule['options'])
         return if result && result.empty?
+
         to_record << {map_to_key.to_sym => result}
       end
     end
@@ -66,13 +68,14 @@ module DataCollector
                 end
 
                 data.compact!
+                data.flatten! if options.key?('flatten') && options['flatten']
               else
                 return options['map'][data] if options['map'].key?(data)
               end
             when 'each'
               data = [data] unless data.is_a?(Array)
-              data = data.map {|d| options['lambda'].call(d)}
-              #pp data
+              data = data.map { |d| options['lambda'].call(d) }
+              data.flatten! if options.key?('flatten') && options['flatten']
             when 'call'
               return options['lambda'].call(data)
             end
