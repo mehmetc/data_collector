@@ -5,6 +5,7 @@ require 'logger'
 require_relative 'input'
 require_relative 'output'
 require_relative 'rules'
+require_relative 'rules_ng'
 require_relative 'config_file'
 
 module DataCollector
@@ -77,6 +78,11 @@ module DataCollector
     # rules.run(my_rules, input, output)
     def rules
       @rules ||= Rules.new
+    end
+
+    # New rules runner
+    def rules_ng
+      @rules_ng ||= RulesNg.new
     end
 
     # evaluator http://jsonpath.com/

@@ -1,8 +1,13 @@
 # DataCollector
 Convenience module to Extract, Transform and Load your data.
+You have 3 main objects that you can use for ETL => INPUT, OUTPUT and FILTER
+and support objects like CONFIG, LOG, RULES and the new RULES_NG
+
+Including the DataCollector::Core module into your application gives you access to these objects.
+ 
 
 #### input    
-Read input from an URI
+Read input from an URI. This URI can have a http, https or file scheme
 
 **Public methods**
 ```ruby
@@ -26,7 +31,7 @@ example:
 Inputs can be JSON, XML or CSV or XML in a TAR.GZ file
 
  ### output 
-Output is an object you can store data that needs to be written to an output stream.  
+Output is an object you can store key/value pairs that needs to be written to an output stream.  
 ```ruby  
     output[:name] = 'John'
     output[:last_name] = 'Doe'
@@ -88,6 +93,7 @@ filter data from a hash using [JSONPath](http://goessner.net/articles/JsonPath/i
 ```
 
 #### rules
+    See newer rules_ng object
 Allows you to define a simple lambda structure to run against a JSONPath filter
 
 A rule is made up of a Hash the key is the map key field its value is a Hash with a JSONPath filter and options to apply a convert method on the filtered results.
@@ -118,6 +124,19 @@ Available convert methods are: time, map, each, call, suffix, text
 
 rules.run(my_rules, record, output)
 ```    
+
+#### rules_ng
+!!! not compatible with RULES object
+
+TODO: work in progress see test for examples on how to use
+
+```
+RULE_SET
+    RULES*
+        FILTERS*
+            LAMBDA*
+            SUFFIX
+```
 
 #### config
 config is an object that points to "config.yml" you can read and/or store data to this object.
