@@ -113,7 +113,6 @@ class DataCollectorNgTest < Minitest::Test
     output.clear
     data = '2'
     rules_ng.run(RULE_SET['rs_hash_with_json_filter_and_multiple_lambdas'], data, output)
-    pp output.raw
     assert_equal(2.0, output[:multiple_lambdas])
   end
 
@@ -131,6 +130,6 @@ class DataCollectorNgTest < Minitest::Test
 
     rules_ng.run(RULE_SET['rs_only_filter'], data, output)
 
-    assert_equal(["This is a title"], output[:only_filter])
+    assert_equal("This is a title", output[:only_filter])
   end
 end

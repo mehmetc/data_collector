@@ -1,10 +1,15 @@
 # DataCollector
-Convenience module to Extract, Transform and Load your data.
-You have 3 main objects that you can use for ETL => INPUT, OUTPUT and FILTER
-and support objects like CONFIG, LOG, RULES and the new RULES_NG
+Convenience module to Extract, Transform and Load your data.  
+You have main objects that help you to 'INPUT', 'OUTPUT' and 'FILTER' data. The basic ETL components.
+Support objects like CONFIG, LOG, RULES and the new RULES_NG just to make life easier.
 
 Including the DataCollector::Core module into your application gives you access to these objects.
  
+The RULES and RULES_NG objects work in a very simple concept. Rules exist of 3 components:
+ - a destination tag
+ - a jsonpath filter to get the data 
+ - a lambda to execute on every filter hit 
+
 
 #### input    
 Read input from an URI. This URI can have a http, https or file scheme
@@ -92,7 +97,7 @@ filter data from a hash using [JSONPath](http://goessner.net/articles/JsonPath/i
     filtered_data = filter(data, "$..metadata.record")
 ```
 
-#### rules
+#### rules (depricated)
     See newer rules_ng object
 Allows you to define a simple lambda structure to run against a JSONPath filter
 
@@ -137,6 +142,90 @@ RULE_SET
             LAMBDA*
             SUFFIX
 ```
+
+##### Examples
+
+Here you find different rule combination that are possible
+
+``` ruby
+ RULE_SETS = {
+      'rs_only_filter' => {
+          'only_filter' => "$.title"
+      },
+      'rs_only_text' => {
+          'plain_text_tag' => {
+              'text' => 'hello world'
+          }
+      },
+      'rs_text_with_suffix' => {
+          'text_tag_with_suffix' => {
+              'text' => ['hello_world', {'suffix' => '-suffix'}]
+          }
+      },
+      'rs_map_with_json_filter' => {
+          'language' => {
+              '@' => {'nl' => 'dut', 'fr' => 'fre', 'de' => 'ger', 'en' => 'eng'}
+          }
+      },
+      'rs_hash_with_json_filter' => {
+          'multiple_of_2' => {
+              '@' => lambda { |d| d.to_i * 2 }
+          }
+      },
+      'rs_hash_with_multiple_json_filter' => {
+          'multiple_of' => [
+              {'@' => lambda { |d| d.to_i * 2 }},
+              {'@' => lambda { |d| d.to_i * 3 }}
+          ]
+      },
+      'rs_hash_with_json_filter_and_suffix' => {
+          'multiple_of_with_suffix' => {
+              '@' => [lambda {|d| d.to_i*2}, 'suffix' => '-multiple_of_2']
+          }
+      },
+      'rs_hash_with_json_filter_and_multiple_lambdas' => {
+          'multiple_lambdas' => {
+              '@' => [lambda {|d| d.to_i*2}, lambda {|d| Math.sqrt(d.to_i) }]
+          }
+      },
+      'rs_hash_with_json_filter_and_option' => {
+          'subjects' => {
+              '$..subject' => [
+                  lambda {|d,o|
+                    {
+                        doc_id: o['id'],
+                        subject: d
+                    }
+                  }
+              ]
+          }
+      }
+```
+
+Here is an example on how to call last RULESET "rs_hash_with_json_filter_and_option".
+ 
+***rules_ng.run*** can have 4 parameters. First 3 are mandatory. The last one ***options*** can hold data static to a rule set.
+
+```ruby
+    include DataCollector::Core
+    output.clear
+    data = {'subject' => ['water', 'thermodynamics']}
+
+    rules_ng.run(RULE_SETS['rs_hash_with_json_filter_and_option'], data, output, {'id' => 1})
+
+```
+
+Results in: 
+```json
+  {
+   "subjects":[
+                {"doc_id":1,"subject":"water"},
+                {"doc_id":1,"subject":"thermodynamics"}
+              ]
+  }
+```
+
+
 
 #### config
 config is an object that points to "config.yml" you can read and/or store data to this object.
