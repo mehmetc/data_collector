@@ -32,7 +32,11 @@ module DataCollector
       unless v.nil?
         if data.has_key?(k)
           if data[k].is_a?(Array) then
-            data[k] << v
+            if v.is_a?(Array)
+              data[k] += v
+            else
+              data[k] << v
+            end
           else
             t = data[k]
             data[k] = Array.new([t, v])
@@ -56,6 +60,22 @@ module DataCollector
         d += input_data
         @data["datap"] = d.compact.flatten
       end
+    end
+
+    def key?(key)
+      @data.key?(key)
+    end
+
+    def has_key?(key)
+      @data.key?(key)
+    end
+
+    def include?(key)
+      @data.key?(key)
+    end
+
+    def keys
+      @data.keys
     end
 
     def raw

@@ -60,21 +60,21 @@ class DataCollectorNgTest < Minitest::Test
     output.clear
     rules_ng.run(RULE_SET['rs_only_text'], {}, output)
 
-    assert_equal('hello world', output[:plain_text_tag])
+    assert_equal(['hello world'], output[:plain_text_tag])
   end
 
   def test_action_text_with_suffix
     output.clear
     rules_ng.run(RULE_SET['rs_text_with_suffix'], {}, output)
 
-    assert_equal('hello_world-suffix', output[:text_tag_with_suffix])
+    assert_equal(['hello_world-suffix'], output[:text_tag_with_suffix])
   end
 
   def test_action_map_input_is_string
     output.clear
     data = 'nl'
     rules_ng.run(RULE_SET['rs_map_with_json_filter'], data, output)
-    assert_equal('dut', output[:language])
+    assert_equal(['dut'], output[:language])
   end
 
 
@@ -91,7 +91,7 @@ class DataCollectorNgTest < Minitest::Test
     output.clear
     data = '2'
     rules_ng.run(RULE_SET['rs_hash_with_json_filter'], data, output)
-    assert_equal(4, output[:multiple_of_2])
+    assert_equal([4], output[:multiple_of_2])
   end
 
   def test_action_hash_with_multiple_json_filter
@@ -106,14 +106,14 @@ class DataCollectorNgTest < Minitest::Test
     output.clear
     data = '2'
     rules_ng.run(RULE_SET['rs_hash_with_json_filter_and_suffix'], data, output)
-    assert_equal('4-multiple_of_2', output[:multiple_of_with_suffix])
+    assert_equal(['4-multiple_of_2'], output[:multiple_of_with_suffix])
   end
 
   def test_action_hash_with_json_filter_and_multiple_lambdas
     output.clear
     data = '2'
     rules_ng.run(RULE_SET['rs_hash_with_json_filter_and_multiple_lambdas'], data, output)
-    assert_equal(2.0, output[:multiple_lambdas])
+    assert_equal([2.0], output[:multiple_lambdas])
   end
 
   def test_action_hash_with_json_filter_and_option
@@ -130,6 +130,6 @@ class DataCollectorNgTest < Minitest::Test
 
     rules_ng.run(RULE_SET['rs_only_filter'], data, output)
 
-    assert_equal("This is a title", output[:only_filter])
+    assert_equal(["This is a title"], output[:only_filter])
   end
 end

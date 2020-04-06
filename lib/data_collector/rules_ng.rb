@@ -42,9 +42,6 @@ module DataCollector
           data = rule_payload.select { |s| s.is_a?(String) }
           rule_payload = rule_payload.delete_if { |s| s.is_a?(String) }
           rule_payload = "@" if rule_payload.empty?
-          # if rule_payload.size == 1
-          #   rule_payload = rule_payload.first
-          # end
         end
       when /json_path\:/
         data = json_path_filter(rule_filter.gsub(/^json_path\:/), input_data)
@@ -91,7 +88,8 @@ module DataCollector
 
       output_data.compact! if output_data.is_a?(Array)
       output_data.flatten! if output_data.is_a?(Array)# || output_data.is_a?(Hash)
-      output_data = output_data.first if output_data.is_a?(Array) && output_data.size == 1
+      output_data = output_data.first if output_data.is_a?(Array) && output_data.size == 1 && (output_data.first.is_a?(Array) || output_data.first.is_a?(Hash))
+
       output_data
     end
 
