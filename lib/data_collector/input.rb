@@ -1,5 +1,6 @@
 #encoding: UTF-8
 require 'http'
+require "net/https" 
 require 'open-uri'
 require 'nokogiri'
 require 'json/ld'
@@ -61,19 +62,27 @@ module DataCollector
 
     def from_https(uri, options = {})
       data = nil
-      http = HTTP
+      user = options[:user] || nil
+      password = options[:password] || nil
+      bearer_token = options[:bearer_token] || nil
 
-      if options.keys.include?(:user) && options.keys.include?(:password)
-        user = options[:user]
-        password = options[:password]
-        http = HTTP.basic_auth(user: user, pass: password)
-      else
-        @logger.warn ("User or Password parameter not found")
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = true
+      request = Net::HTTP::Get.new(uri.request_uri)
+  
+      unless user.nil? and password.nil?
+        @logger.debug "Set Basic_auth"
+        request.basic_auth user, password
+        #  http_response = HTTP.basic_auth(user: user, pass: password).get(escape_uri(uri))
+      end
+      unless bearer_token.nil?
+        @logger.debug  "Set authorization bearer token"
+        request["Authorization"] = "Bearer #{bearer_token}"
       end
 
-      http_response = http.get(escape_uri(uri))
+      http_response = http.request(request)
 
-      case http_response.code
+      case http_response.code.to_i
       when 200
         @raw = data = http_response.body.to_s
 
@@ -81,7 +90,8 @@ module DataCollector
         #   f.puts data
         # end
 
-        file_type = options.with_indifferent_access.has_key?(:content_type) ? options.with_indifferent_access[:content_type] : file_type_from(http_response.headers)
+
+        file_type = options.with_indifferent_access.has_key?(:content_type) ? options.with_indifferent_access[:content_type] : file_type_from(http_response.each_header)
 
         unless options.with_indifferent_access.has_key?(:raw) && options.with_indifferent_access[:raw] == true
           case file_type
@@ -163,13 +173,14 @@ module DataCollector
     end
 
     def file_type_from(headers)
+      headers = headers.map {|k,v| [(k.respond_to?(:downcase) ? k.downcase : k), v] }.to_h
       file_type = 'application/octet-stream'
-      file_type = if headers.include?('Content-Type')
-                    headers['Content-Type'].split(';').first
+      file_type = if headers.key?('content-type')
+                    headers['content-type'].split(';').first
                   else
+                    @logger.debug  "No Header content-type available"
                     MIME::Types.of(filename_from(headers)).first.content_type
                   end
-
       return file_type
     end
 
