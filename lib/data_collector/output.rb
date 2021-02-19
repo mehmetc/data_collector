@@ -82,6 +82,11 @@ module DataCollector
       @data
     end
 
+    def crush
+      data = @data
+      @data = deep_compact(data)
+    end
+
     def clear
       @data = {}
       #GC.start(full_mark: true, immediate_sweep: true)
@@ -216,7 +221,27 @@ module DataCollector
       out
     end
 
-
+    def deep_compact( data )
+      if data.is_a?(Hash)
+        #puts " - Hash - #{data}"
+        data.compact!
+        data.each { |k, v| data[k] = deep_compact(v) }
+        data.compact!
+        data
+      elsif data.is_a?(Array)
+        #puts " - Array - #{data}"
+        data.each { |v| deep_compact(v) }
+        data.empty? ? nil : data
+        #puts " - Array size- #{data.size}"
+        data.size == 1 ? data[0] : data
+      elsif data.is_a?(String)
+        #puts " - String - #{data}"
+        data.blank? ? nil : data
+      else
+        data
+      end
+    end
+  
     private
 
     def tar_file(tar_file_name)
