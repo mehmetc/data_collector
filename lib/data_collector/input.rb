@@ -1,6 +1,5 @@
 #encoding: UTF-8
 require 'http'
-require "net/https" 
 require 'open-uri'
 require 'nokogiri'
 require 'json/ld'
@@ -61,27 +60,24 @@ module DataCollector
     end
 
     def from_https(uri, options = {})
-      data = nil
-      user = options[:user] || nil
-      password = options[:password] || nil
-      bearer_token = options[:bearer_token] || nil
+     
+      http = HTTP
 
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = true
-      request = Net::HTTP::Get.new(uri.request_uri)
-  
-      unless user.nil? and password.nil?
-        @logger.debug "Set Basic_auth"
-        request.basic_auth user, password
-        #  http_response = HTTP.basic_auth(user: user, pass: password).get(escape_uri(uri))
-      end
-      unless bearer_token.nil?
+      if options.keys.include?(:bearer_token) 
         @logger.debug  "Set authorization bearer token"
-        request["Authorization"] = "Bearer #{bearer_token}"
+        bearer_token = options[:bearer_token]
+        http = HTTP.auth("Bearer #{bearer_token}")
+      else
+        if options.keys.include?(:user) && options.keys.include?(:password) 
+          @logger.debug "Set Basic_auth"
+          user = options[:user]
+          password = options[:password]
+          http = HTTP.basic_auth(user: user, pass: password)
+        end
       end
 
-      http_response = http.request(request)
-
+      http_response = http.get(escape_uri(uri))
+      
       case http_response.code.to_i
       when 200
         @raw = data = http_response.body.to_s
@@ -91,7 +87,8 @@ module DataCollector
         # end
 
 
-        file_type = options.with_indifferent_access.has_key?(:content_type) ? options.with_indifferent_access[:content_type] : file_type_from(http_response.each_header)
+        #file_type = options.with_indifferent_access.has_key?(:content_type) ? options.with_indifferent_access[:content_type] : file_type_from(http_response.each_header)
+        file_type = options.with_indifferent_access.has_key?(:content_type) ? options.with_indifferent_access[:content_type] : file_type_from(http_response.headers)
 
         unless options.with_indifferent_access.has_key?(:raw) && options.with_indifferent_access[:raw] == true
           case file_type
@@ -153,7 +150,7 @@ module DataCollector
 
     def xml_to_hash(data)
       #gsub('&lt;\/', '&lt; /') outherwise wrong XML-parsing (see records lirias1729192 )
-      data = data.gsub /&lt;/, '&lt; /'
+      data = data.gsub(/&lt;/, '&lt; /')
       nori = Nori.new(parser: :nokogiri, strip_namespaces: true, convert_tags_to: lambda { |tag| tag.gsub(/^@/, '_') })
       nori.parse(data)
       #JSON.parse(nori.parse(data).to_json)

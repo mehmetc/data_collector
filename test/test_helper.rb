@@ -12,9 +12,9 @@ WebMock.enable!
 stub_request(:get, "https://www.example.com/").
   with(
     headers:{
-        'Accept'=>'*/*', 
-        'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
-        'User-Agent'=>'Ruby'
+      'Connection'=>'close',
+      'Host'=>'www.example.com',
+      'User-Agent'=>'http.rb/4.4.1'
   }).to_return(status: 200, body: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
   <collection>
       <record>apple</record>
@@ -24,11 +24,11 @@ stub_request(:get, "https://www.example.com/").
 
 stub_request(:get, "https://www.example.com/").
   with(
-    basic_auth: ['account', 'secret'],
     headers: {
-        'Accept'=>'*/*', 
-        'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
-        'User-Agent'=>'Ruby'
+      'Authorization'=>'Basic YWNjb3VudDpzZWNyZXQ=',
+      'Connection'=>'close',
+      'Host'=>'www.example.com',
+      'User-Agent'=>'http.rb/4.4.1'
     }).
   to_return(status: 200, body: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
   <collection>
@@ -42,12 +42,13 @@ stub_request(:get, "https://www.example.com/").
   with(
     headers: {
         'Authorization'=>'Bearer ABCDEfghijKLMNOpqrsTUVWXYZ', 
-        'Accept'=>'*/*', 
-        'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
-        'User-Agent'=>'Ruby'
+        'Connection'=>'close',
+        'Host'=>'www.example.com',
+        'User-Agent'=>'http.rb/4.4.1'
     }).
   to_return(status: 200, body: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
   <collection>
       <record>Capsicums</record>
       <record>Chilli peppers</record>
-  </collection>", headers: { "Content-type" => 'application/atom+xml;charset=UTF-8'  })
+  </collection>", headers: { "Content-type" => 'application/atom+xml;charset=UTF-8'  })  
+
