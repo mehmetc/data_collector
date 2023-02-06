@@ -18,7 +18,7 @@ module DataCollector
 
     def apply_rule(tag, rule, input_data, output_data, options = {})
       rule_filter = rule
-      rule_payload = ""
+      rule_payload = ''
 
       case rule
       when Array
@@ -28,7 +28,7 @@ module DataCollector
         return output_data
       when String
         rule_filter = rule
-        rule_payload = ""
+        rule_payload = ''
       else
         rule_filter = rule.keys.first
         rule_payload = rule.values.first
@@ -40,11 +40,11 @@ module DataCollector
           data = rule_payload
         else
           data = rule_payload.select { |s| s.is_a?(String) }
-          rule_payload = rule_payload.delete_if { |s| s.is_a?(String) }
-          rule_payload = "@" if rule_payload.empty?
+          rule_payload = rule_payload.reject { |s| s.is_a?(String) }
+          rule_payload = '@' if rule_payload.empty?
         end
-      when /json_path\:/
-        data = json_path_filter(rule_filter.gsub(/^json_path\:/), input_data)
+      when /json_path:/
+        data = json_path_filter(rule_filter.gsub(/^json_path:/), input_data)
       else
         data = json_path_filter(rule_filter, input_data)
       end
@@ -59,24 +59,27 @@ module DataCollector
 
     def apply_filtered_data_on_payload(input_data, payload, options = {})
       return nil if input_data.nil?
+
       output_data = nil
       case payload.class.name
       when 'Proc'
         data = input_data.is_a?(Array) ? input_data : [input_data]
-        if options && options.empty?
-          output_data = data.map { |d| payload.call(d) }
-        else
-          output_data = data.map { |d| payload.call(d, options) }
-        end
+        output_data = if options.empty?
+                        data.map { |d| payload.call(d) }
+                      else
+                        data.map { |d| payload.call(d, options) }
+                      end
       when 'Hash'
         input_data = [input_data] unless input_data.is_a?(Array)
-        output_data = input_data.map do |m|
-          if payload.key?('suffix')
-            "#{m}#{payload['suffix']}"
-          else
-            payload[m]
+        if input_data.is_a?(Array)
+          output_data = input_data.map do |m|
+            if payload.key?('suffix')
+              "#{m}#{payload['suffix']}"
+            else
+              payload[m]
+            end
           end
-        end if input_data.is_a?(Array)
+        end
       when 'Array'
         output_data = input_data
         payload.each do |p|
@@ -87,8 +90,12 @@ module DataCollector
       end
 
       output_data.compact! if output_data.is_a?(Array)
-      output_data.flatten! if output_data.is_a?(Array)# || output_data.is_a?(Hash)
-      output_data = output_data.first if output_data.is_a?(Array) && output_data.size == 1 && (output_data.first.is_a?(Array) || output_data.first.is_a?(Hash))
+      output_data.flatten! if output_data.is_a?(Array)
+      if output_data.is_a?(Array) &&
+         output_data.size == 1 &&
+         (output_data.first.is_a?(Array) || output_data.first.is_a?(Hash))
+        output_data = output_data.first
+      end
 
       output_data
     end
@@ -97,9 +104,8 @@ module DataCollector
       data = nil
       return data if input_data.nil? || input_data.empty?
       return input_data if input_data.is_a?(String)
-      Core::filter(input_data, filter)
+
+      Core.filter(input_data, filter)
     end
-
-
   end
 end
