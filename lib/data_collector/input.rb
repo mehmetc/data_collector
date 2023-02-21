@@ -61,17 +61,33 @@ module DataCollector
 
     def from_https(uri, options = {})
       data = nil
+      HTTP.default_options = HTTP::Options.new(features: { logging: { logger: @logger } })
       http = HTTP
 
-      if options.keys.include?(:user) && options.keys.include?(:password)
+      #http.use(logging: {logger: @logger})
+
+      if options.key?(:user) && options.key?(:password)
+        @logger.debug "Set Basic_auth"
         user = options[:user]
         password = options[:password]
         http = HTTP.basic_auth(user: user, pass: password)
-      else
-        @logger.warn ("User or Password parameter not found")
+      elsif options.key?(:bearer_token)
+        @logger.debug  "Set authorization bearer token"
+        bearer = options[:bearer_token]
+        bearer = "Bearer #{bearer}" unless bearer =~ /^Bearer /i
+        http = HTTP.auth(bearer)
       end
 
-      http_response = http.get(escape_uri(uri))
+      if options.key?(:verify_ssl) && uri.scheme.eql?('https')
+        @logger.warn "Disabling SSL verification. "
+        #shouldn't use this but we all do ...
+        ctx = OpenSSL::SSL::SSLContext.new
+        ctx.verify_mode = OpenSSL::SSL::VERIFY_NONE
+
+        http_response = http.get(escape_uri(uri), ssl_context: ctx)
+      else
+        http_response = http.get(escape_uri(uri))
+      end
 
       case http_response.code
       when 200
@@ -167,6 +183,7 @@ module DataCollector
       file_type = if headers.include?('Content-Type')
                     headers['Content-Type'].split(';').first
                   else
+                    @logger.debug  "No Header content-type available"
                     MIME::Types.of(filename_from(headers)).first.content_type
                   end
 

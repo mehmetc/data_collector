@@ -97,6 +97,11 @@ module DataCollector
         output_data = output_data.first
       end
 
+      if options.key?('_no_array_with_one_element') && options['_no_array_with_one_element'] &&
+        output_data.is_a?(Array) && output_data.size == 1
+        output_data = output_data.first
+      end
+
       output_data
     end
 
