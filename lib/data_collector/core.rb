@@ -16,6 +16,7 @@ module DataCollector
     def input
       @input ||= DataCollector::Input.new
     end
+    module_function :input
 
     # Output is an object you can store data that needs to be written to an output stream
     # output[:name] = 'John'
@@ -48,6 +49,7 @@ module DataCollector
     def output
       @output ||= Output.new
     end
+    module_function :output
 
     #You can apply rules to input
     # A rule is made up of a Hash the key is the map key field its value is a Hash with a JSONPath filter and
@@ -79,11 +81,13 @@ module DataCollector
     def rules
       @rules ||= Rules.new
     end
+    module_function :rules
 
     # New rules runner
     def rules_ng
       @rules_ng ||= RulesNg.new
     end
+    module_function :rules_ng
 
     # evaluator http://jsonpath.com/
     # uitleg http://goessner.net/articles/JsonPath/index.html
@@ -104,15 +108,18 @@ module DataCollector
       @logger.error("#{filter_path} failed: #{e.message}")
       []
     end
+    module_function :filter
 
     def config
       @config ||= ConfigFile
     end
+    module_function :config
 
     def log(message)
       @logger ||= Logger.new(STDOUT)
       @logger.info(message)
     end
+    module_function :log
 
   end
 
