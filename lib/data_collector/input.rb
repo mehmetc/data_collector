@@ -84,9 +84,9 @@ module DataCollector
         ctx = OpenSSL::SSL::SSLContext.new
         ctx.verify_mode = OpenSSL::SSL::VERIFY_NONE
 
-        http_response = http.get(escape_uri(uri), ssl_context: ctx)
+        http_response = http.follow.get(escape_uri(uri), ssl_context: ctx)
       else
-        http_response = http.get(escape_uri(uri))
+        http_response = http.follow.get(escape_uri(uri))
       end
 
       case http_response.code
