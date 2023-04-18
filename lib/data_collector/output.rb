@@ -38,8 +38,10 @@ module DataCollector
               data[k] << v
             end
           else
-            t = data[k]
-            data[k] = Array.new([t, v])
+            data[k] = v
+            # HELP: why am I creating an array here?
+            # t = data[k]
+            # data[k] = Array.new([t, v])
           end
         else
           data[k] = v
@@ -152,7 +154,6 @@ module DataCollector
       result
     rescue Exception => e
       raise "unable to transform to text: #{e.message}"
-      ""
     end
 
     def to_tmp_file(erb_file, records_dir)

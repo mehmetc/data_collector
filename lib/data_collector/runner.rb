@@ -29,7 +29,6 @@ module DataCollector
       puts e.message
       puts e.backtrace.join("\n")
     ensure
-#    output.tar_file.close unless output.tar_file.closed?
       @logger.info("Finished in #{((Time.now - @time_start)*1000).to_i} ms")
     end
 

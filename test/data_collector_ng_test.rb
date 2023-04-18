@@ -52,6 +52,13 @@ class DataCollectorNgTest < Minitest::Test
                   }
               ]
           }
+      },
+      'rs_raises_error' => {
+        'bad_rule' => {
+          '@' => lambda do |d|
+            raise 'This is a bad rule'
+          end
+        }
       }
 
   }.freeze
@@ -131,5 +138,16 @@ class DataCollectorNgTest < Minitest::Test
     rules_ng.run(RULE_SET['rs_only_filter'], data, output)
 
     assert_equal(["This is a title"], output[:only_filter])
+  end
+
+  def test_bad_rule
+    output.clear
+    data = {'title' => "This is a title"}
+
+    error = assert_raises(DataCollector::Error) do
+      rules_ng.run(RULE_SET['rs_raises_error'], data, output)
+    end
+
+    assert_equal(false, (error.message =~ /bad rule/).nil?)
   end
 end

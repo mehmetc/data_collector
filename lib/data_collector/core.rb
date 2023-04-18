@@ -10,6 +10,14 @@ require_relative 'config_file'
 
 module DataCollector
   module Core
+    # Pipeline for your data pipeline
+    # example:  pipeline.on_message do |input, output|
+    #            ** processing logic here **
+    #           end
+    def pipeline
+      @input ||= DataCollector::Pipeline.new
+    end
+    module_function :pipeline
     # Read input from an URI
     # example:  input.from_uri("http://www.libis.be")
     #           input.from_uri("file://hello.txt")
@@ -79,6 +87,8 @@ module DataCollector
     # }
     # rules.run(my_rules, input, output)
     def rules
+      #DataCollector::Core.log('RULES depricated using RULESNG')
+      #rules_ng
       @rules ||= Rules.new
     end
     module_function :rules
@@ -120,6 +130,12 @@ module DataCollector
       @logger.info(message)
     end
     module_function :log
+
+    def error(message)
+      @logger ||= Logger.new(STDOUT)
+      @logger.error(message)
+    end
+    module_function :error
 
   end
 

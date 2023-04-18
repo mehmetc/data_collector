@@ -1,39 +1,91 @@
 # DataCollector
-Convenience module to Extract, Transform and Load your data.  
-You have main objects that help you to 'INPUT', 'OUTPUT' and 'FILTER' data. The basic ETL components.
-Support objects like CONFIG, LOG, RULES and the new RULES_NG just to make life easier.
+Convenience module to Extract, Transform and Load your data in a Pipeline.
+The 'INPUT', 'OUTPUT' and 'FILTER' object will help you to read, transform and output your data.
+Support objects like CONFIG, LOG, ERROR, RULES. Will help you to write manageable rules to transform and log your data.
+Include the DataCollector::Core module into your application gives you access to these objects.
+```ruby
+include DataCollector::Core
+```
 
-Including the DataCollector::Core module into your application gives you access to these objects.
- 
-The RULES and RULES_NG objects work in a very simple concept. Rules exist of 3 components:
- - a destination tag
- - a jsonpath filter to get the data 
- - a lambda to execute on every filter hit 
+Every object can be used on its own.
 
 
-#### input    
-Read input from an URI. This URI can have a http, https or file scheme
+#### Pipeline
+Allows you to create a simple pipeline of operations to process data. With a data pipeline, you can collect, process, and transform data, and then transfer it to various systems and applications.
 
-**Public methods**
+You can set a schedule for pipelines that are triggered by new data, specifying how often the pipeline should be 
+executed in the [ISO8601 duration format](https://www.digi.com/resources/documentation/digidocs//90001488-13/reference/r_iso_8601_duration_format.htm). The processing logic is then executed.   
+###### methods:
+ - .new(options): options can be schedule in [ISO8601 duration format](https://www.digi.com/resources/documentation/digidocs//90001488-13/reference/r_iso_8601_duration_format.htm)  and name
+ - .run: start the pipeline. blocking if a schedule is supplied
+ - .stop: stop the pipeline
+ - .pause: pause the pipeline. Restart using .run
+ - .running?: is pipeline running
+ - .stopped?: is pipeline not running
+ - .paused?: is pipeline paused
+ - .name: name of the pipe
+ - .run_count: number of times the pipe has ran
+ - .on_message: handle to run every time a trigger event happens
+###### example:
+```ruby
+#create a pipline scheduled to run every 10 minutes
+pipeline = Pipeline.new(schedule: 'PT10M')
+
+pipeline.on_message do |input, output|
+  # logic
+end
+
+pipeline.run
+```
+
+#### input
+The input component is part of the processing logic. All data is converted into a Hash, Array, ... accessible using plain Ruby or JSONPath using the filter object.  
+The input component can fetch data from various URIs, such as files, URLs, directories, queues, ...  
+For a push input component, a listener is created with a processing logic block that is executed whenever new data is available.
+A push happens when new data is created in a directory, message queue, ...
+
 ```ruby
   from_uri(source, options = {:raw, :content_type})
 ```
-- source: an uri with a scheme of http, https, file
+- source: an uri with a scheme of http, https, file, amqp
 - options:
     - raw: _boolean_ do not parse
     - content_type: _string_ force a content_type if the 'Content-Type' returned by the http server is incorrect 
 
-example:
+###### example:
 ```ruby  
+# read from an http endpoint
     input.from_uri("http://www.libis.be")
     input.from_uri("file://hello.txt")
     input.from_uri("http://www.libis.be/record.jsonld", content_type: 'application/ld+json')
+
+# read data from a RabbitMQ queue
+    listener = input.from_uri('amqp://user:password@localhost?channel=hello')
+    listener.on_message do |input, output, message| 
+      puts message
+    end
+    listener.start
+
+# read data from a directory
+    listener = input.from_uri('file://this/is/directory')
+    listener.on_message do |input, output, filename|
+      puts filename
+    end
+    listener.start
 ```
 
+Inputs can be JSON, XML or CSV or XML in a TAR.GZ file   
 
+###### listener from input.from_uri(directory|message queue)
+When a listener is defined that is triggered by an event(PUSH) like a message queue or files written to a directory you have these extra methods.
 
-
-Inputs can be JSON, XML or CSV or XML in a TAR.GZ file
+- .run: start the listener. blocking if a schedule is supplied
+- .stop: stop the listener
+- .pause: pause the listener. Restart using .run
+- .running?: is listener running
+- .stopped?: is listener not running
+- .paused?: is listener paused
+- .on_message: handle to run every time a trigger event happens
 
  ### output 
 Output is an object you can store key/value pairs that needs to be written to an output stream.  
@@ -45,7 +97,7 @@ Output is an object you can store key/value pairs that needs to be written to an
 Write output to a file, string use an ERB file as a template
 example:
 ___test.erb___
-```ruby
+```erbruby
 <names>
     <combined><%= data[:name] %> <%= data[:last_name] %></combined>
     <%= print data, :name, :first_name %>
@@ -53,7 +105,7 @@ ___test.erb___
 </names>
 ```
 will produce
-```ruby
+```html
    <names>
      <combined>John Doe</combined>
      <first_name>John</first_name>
@@ -97,41 +149,11 @@ filter data from a hash using [JSONPath](http://goessner.net/articles/JsonPath/i
     filtered_data = filter(data, "$..metadata.record")
 ```
 
-#### rules (depricated)
-    See newer rules_ng object
-~~Allows you to define a simple lambda structure to run against a JSONPath filter~~
-
-~~A rule is made up of a Hash the key is the map key field its value is a Hash with a JSONPath filter and options to apply a convert method on the filtered results.~~
-~~Available convert methods are: time, map, each, call, suffix, text~~  
-~~- time: parses a given time/date string into a Time object~~  
-~~- map: applies a mapping to a filter~~  
-~~- suffix: adds a suffix to a result~~  
-~~- call: executes a lambda on the filter~~  
-~~- each: runs a lambda on each row of a filter~~  
-~~- text: passthrough method. Returns value unchanged~~  
-
-~~example:~~
-```ruby 
- my_rules = {
-   'identifier' => {"filter" => '$..id'},
-   'language' => {'filter' => '$..lang',
-                  'options' => {'convert' => 'map',
-                                'map' => {'nl' => 'dut', 'fr' => 'fre', 'de' => 'ger', 'en' => 'eng'}
-                               }
-                 },
-   'subject' => {'filter' => '$..keywords',
-                 options' => {'convert' => 'each',
-                              'lambda' => lambda {|d| d.split(',')}
-                             }
-                },
-   'creationdate' => {'filter' => '$..published_date', 'convert' => 'time'}
- }
-
-rules.run(my_rules, record, output)
-```    
-
-#### rules_ng
-!!! not compatible with RULES object
+#### rules 
+The RULES objects have a simple concept. Rules exist of 3 components:
+- a destination tag
+- a jsonpath filter to get the data
+- a lambda to execute on every filter hit
 
 TODO: work in progress see test for examples on how to use
 
@@ -202,15 +224,15 @@ Here you find different rule combination that are possible
       }
 ```
 
-Here is an example on how to call last RULESET "rs_hash_with_json_filter_and_option".
  
-***rules_ng.run*** can have 4 parameters. First 3 are mandatory. The last one ***options*** can hold data static to a rule set or engine directives.
+***rules.run*** can have 4 parameters. First 3 are mandatory. The last one ***options*** can hold data static to a rule set or engine directives.
 
-List of engine directives:
+##### List of engine directives:
   - _no_array_with_one_element: defaults to false. if the result is an array with 1 element just return the element. 
 
-
+###### example:
 ```ruby
+# apply RULESET "rs_hash_with_json_filter_and_option" to data
     include DataCollector::Core
     output.clear
     data = {'subject' => ['water', 'thermodynamics']}
@@ -315,7 +337,32 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+```ruby
+require 'data_collector'
+
+include DataCollector::Core
+# including core gives you a pipeline, input, output, filter, config, log, error object to work with
+RULES = {
+        'title' => '$..vertitle'
+}
+#create a PULL pipeline and schedule it to run every 5 seconds
+pipeline = DataCollector::Pipeline.new(schedule: 'PT5S')
+
+pipeline.on_message do |input, output|
+  data = input.from_uri('https://services3.libis.be/primo_artefact/lirias3611609')
+  rules.run(RULES, data, output)
+  #puts JSON.pretty_generate(input.raw)
+  puts JSON.pretty_generate(output.raw)
+  output.clear
+  
+  if pipeline.run_count > 2
+    log('stopping pipeline after one run')
+    pipeline.stop
+  end
+end
+pipeline.run
+
+```
 
 ## Development
 

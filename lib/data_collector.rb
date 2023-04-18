@@ -4,6 +4,7 @@ require 'logger'
 
 require 'data_collector/version'
 require 'data_collector/runner'
+require 'data_collector/pipeline'
 require 'data_collector/ext/xml_utility_node'
 
 module DataCollector

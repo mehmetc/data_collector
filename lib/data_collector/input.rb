@@ -12,6 +12,8 @@ require 'active_support/core_ext/hash'
 require 'zlib'
 require 'minitar'
 require 'csv'
+require_relative 'input/dir'
+require_relative 'input/queue'
 
 #require_relative 'ext/xml_utility_node'
 module DataCollector
@@ -34,7 +36,13 @@ module DataCollector
         when 'https'
           data = from_https(uri, options)
         when 'file'
-          data = from_file(uri, options)
+          if File.directory?("#{uri.host}/#{uri.path}")
+            return from_dir(uri, options)
+          else
+            data = from_file(uri, options)
+          end
+        when 'amqp'
+          data = from_queue(uri,options)
         else
           raise "Do not know how to process #{source}"
         end
@@ -61,7 +69,10 @@ module DataCollector
 
     def from_https(uri, options = {})
       data = nil
-      HTTP.default_options = HTTP::Options.new(features: { logging: { logger: @logger } })
+      if options.with_indifferent_access.include?(:logging) && options.with_indifferent_access[:logging]
+        HTTP.default_options = HTTP::Options.new(features: { logging: { logger: @logger } })
+      end
+
       http = HTTP
 
       #http.use(logging: {logger: @logger})
@@ -155,6 +166,14 @@ module DataCollector
       end
 
       data
+    end
+
+    def from_dir(uri, options = {})
+      DataCollector::Input::Dir.new(uri, options)
+    end
+
+    def from_queue(uri, options = {})
+      DataCollector::Input::Queue.new(uri, options)
     end
 
     def xml_to_hash(data)
