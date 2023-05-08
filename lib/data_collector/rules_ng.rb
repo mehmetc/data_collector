@@ -51,7 +51,7 @@ module DataCollector
 
       data = apply_filtered_data_on_payload(data, rule_payload, options)
 
-      output_data << {tag.to_sym => data} unless data.nil? || (data.is_a?(Array) && data.empty?)
+      output_data << { tag.to_sym => data } unless data.nil? || (data.is_a?(Array) && data.empty?)
     rescue StandardError => e
       # puts "error running rule '#{tag}'\n\t#{e.message}"
       # puts e.backtrace.join("\n")
@@ -61,15 +61,26 @@ module DataCollector
     def apply_filtered_data_on_payload(input_data, payload, options = {})
       return nil if input_data.nil?
 
-      normalized_options = options.select{|k,v| k !~ /^_/ }.with_indifferent_access
+      normalized_options = options.select { |k, v| k !~ /^_/ }.with_indifferent_access
       output_data = nil
       case payload.class.name
       when 'Proc'
         data = input_data.is_a?(Array) ? input_data : [input_data]
         output_data = if normalized_options.empty?
-                        data.map { |d| payload.call(d) }
+                        # data.map { |d| payload.curry.call(d).call(d) }
+                        data.map { |d|
+                          loop do
+                            payload_result = payload.curry.call(d)
+                            break payload_result unless payload_result.is_a?(Proc)
+                          end
+                        }
                       else
-                        data.map { |d| payload.call(d, normalized_options) }
+                        data.map { |d|
+                          loop do
+                            payload_result = payload.curry.call(d, normalized_options)
+                            break payload_result unless payload_result.is_a?(Proc)
+                          end
+                        }
                       end
       when 'Hash'
         input_data = [input_data] unless input_data.is_a?(Array)
@@ -77,9 +88,9 @@ module DataCollector
           output_data = input_data.map do |m|
             if payload.key?('suffix')
               if (m.is_a?(Hash))
-                m.transform_values{|v| v.is_a?(String) ? "#{v}#{payload['suffix']}" : v}
+                m.transform_values { |v| v.is_a?(String) ? "#{v}#{payload['suffix']}" : v }
               elsif m.is_a?(Array)
-                m.map{|n| n.is_a?(String) ? "#{n}#{payload['suffix']}": n}
+                m.map { |n| n.is_a?(String) ? "#{n}#{payload['suffix']}" : n }
               elsif m.methods.include?(:to_s)
                 "#{m}#{payload['suffix']}"
               else
@@ -102,8 +113,8 @@ module DataCollector
       output_data.compact! if output_data.is_a?(Array)
       output_data.flatten! if output_data.is_a?(Array)
       if output_data.is_a?(Array) &&
-         output_data.size == 1 &&
-         (output_data.first.is_a?(Array) || output_data.first.is_a?(Hash))
+        output_data.size == 1 &&
+        (output_data.first.is_a?(Array) || output_data.first.is_a?(Hash))
         output_data = output_data.first
       end
 

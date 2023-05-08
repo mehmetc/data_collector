@@ -13,6 +13,8 @@ module DataCollector
 
       @schedule = options[:schedule] || {}
       @name = options[:name] || "#{Time.now.to_i}-#{rand(10000)}"
+      @options = options
+      @listeners = []
     end
 
     def on_message(&block)
@@ -22,6 +24,9 @@ module DataCollector
     def run
       if paused? && @running
         @paused = false
+        @listeners.each do |listener|
+          listener.run if listener.paused?
+        end
       end
 
       @running = true
@@ -42,8 +47,20 @@ module DataCollector
         end
       else # run once
         @run_count += 1
-        DataCollector::Core.log("PIPELINE running once")
-        handle_on_message(@input, @output)
+        if @options.key?(:uri)
+          listener = Input.new.from_uri(@options[:uri], @options)
+          listener.on_message do |input, output, filename|
+            DataCollector::Core.log("PIPELINE triggered by #{filename}")
+            handle_on_message(@input, @output, filename)
+          end
+          @listeners << listener
+
+          listener.run(true)
+
+        else
+          DataCollector::Core.log("PIPELINE running once")
+          handle_on_message(@input, @output)
+        end
       end
     rescue StandardError => e
       DataCollector::Core.error("PIPELINE run failed: #{e.message}")
@@ -54,10 +71,18 @@ module DataCollector
     def stop
       @running = false
       @paused = false
+      @listeners.each do |listener|
+        listener.stop if listener.running?
+      end
     end
 
     def pause
-      @paused = !@paused if @running
+      if @running
+      @paused = !@paused
+        @listeners.each do |listener|
+          listener.pause if listener.running?
+        end
+      end
     end
 
     def running?
@@ -74,11 +99,11 @@ module DataCollector
 
     private
 
-    def handle_on_message(input, output)
+    def handle_on_message(input, output, filename = nil)
       if (callback = @on_message_callback)
         timing = Time.now
         begin
-          callback.call(input, output)
+          callback.call(input, output, filename)
         rescue StandardError => e
           DataCollector::Core.error("PIPELINE #{e.message}")
         ensure

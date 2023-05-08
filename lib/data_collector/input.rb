@@ -37,8 +37,10 @@ module DataCollector
           data = from_https(uri, options)
         when 'file'
           if File.directory?("#{uri.host}/#{uri.path}")
+            raise DataCollector::Error, "#{uri.host}/#{uri.path} not found" unless File.exist?("#{uri.host}/#{uri.path}")
             return from_dir(uri, options)
           else
+            raise DataCollector::Error, "#{uri.host}/#{uri.path} not found" unless File.exist?("#{uri.host}/#{uri.path}")
             data = from_file(uri, options)
           end
         when 'amqp'

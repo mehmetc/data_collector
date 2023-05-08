@@ -269,8 +269,11 @@ Log to stdout
 ```ruby
     log("hello world")
 ```
-
-
+#### error
+Log an error
+```ruby
+    error("if you have an issue take a tissue")
+```
 ## Example
 Input data ___test.csv___
 ```csv
