@@ -130,6 +130,8 @@ module DataCollector
             data = xml_to_hash(data)
           end
         end
+      when 206
+        raise '206 Partial Content'
       when 401
         raise 'Unauthorized'
       when 404

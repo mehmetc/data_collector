@@ -216,6 +216,24 @@ module DataCollector
       raise "unable to save to jsonfile: #{e.message}"
     end
 
+    def to_xmlfile (data, xmlfile, records_dir="records", xml_root="record")
+      file_name = File.join(records_dir,"#{xmlfile}_#{Time.now.strftime("%Y%m%d%H%M%S")}_#{rand(1000)}.xml")
+      
+      unless data.is_a?(Hash)
+        raise "Expext a hash as input not an #{data.class}"
+      end
+
+      FileUtils.mkdir_p(records_dir) unless File.directory?(records_dir)      
+      File.open(file_name, 'wb', 0666) do |f|
+        f.puts data.to_xml(:root => xml_root)
+      end
+
+      return file_name
+      # File.chmod(0666, file_name)
+    rescue Exception => e
+      raise "unable to save to xmlfile: #{e.message}"
+    end
+
     def flatten()
       out = Hash.new
       @data.each do |m|
@@ -226,20 +244,19 @@ module DataCollector
 
     def deep_compact( data )
       if data.is_a?(Hash)
-        #puts " - Hash - #{data}"
+        # puts " - Hash - #{data}"
         data.compact!
         data.each { |k, v| data[k] = deep_compact(v) }
         data.compact!
-        data
       elsif data.is_a?(Array)
-        #puts " - Array - #{data}"
-        data.each { |v| deep_compact(v) }
-        data.empty? ? nil : data
+        # puts " - Array - #{data}"
+        data.map! { |v| deep_compact(v) }
+        data.compact!
         #puts " - Array size- #{data.size}"
         data.size == 1 ? data[0] : data
       elsif data.is_a?(String)
-        #puts " - String - #{data}"
-        data.blank? ? nil : data
+        # puts " - String - #{data}"
+        data.strip.blank? ? nil : data
       else
         data
       end
