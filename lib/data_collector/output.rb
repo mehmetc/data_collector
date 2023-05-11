@@ -175,7 +175,7 @@ module DataCollector
       return file_name
     end
 
-    def to_file(erb_file, tar_file_name = nil)
+    def to_file(erb_file, tar_file_name = nil, records_dir="records")
       id = data[:id].first rescue 'unknown'
       result = to_s(erb_file)
 
@@ -184,7 +184,7 @@ module DataCollector
       end
 
       if tar_file_name.nil?
-        file_name = "records/#{id}_#{rand(1000)}.xml"
+        file_name = File.join(records_dir,"#{id}_#{rand(1000)}.xml")
         File.open(file_name, 'wb:UTF-8') do |f|
           f.puts xml_result.to_xml
         end
@@ -192,7 +192,7 @@ module DataCollector
         return file_name
       else
 
-        Minitar::Output.open(Zlib::GzipWriter.new(File.open("records/#{tar_file_name}", 'wb:UTF-8'))) do |f|
+        Minitar::Output.open(Zlib::GzipWriter.new(File.open( File.join(records_dir, tar_file_name) , 'wb:UTF-8'))) do |f|
           xml_data = xml_result.to_xml
           f.tar.add_file_simple("#{id}_#{rand(1000)}.xml", data: xml_data, size: xml_data.size, mtime: Time.now.to_i)
         end
@@ -204,12 +204,14 @@ module DataCollector
       raise "unable to save to file: #{e.message}"
     end
 
+    def to_jsonfile (data, jsonfile, records_dir="records")
+      file_name = File.join(records_dir,"#{jsonfile}_#{Time.now.strftime("%Y%m%d%H%M%S")}_#{rand(1000)}.json")
 
-    def to_jsonfile (jsondata, jsonfile)
-      file_name = "records/#{jsonfile}_#{Time.now.to_i}_#{rand(1000)}.json"
+      FileUtils.mkdir_p(records_dir) unless File.directory?(records_dir)
       File.open(file_name, 'wb') do |f|
-        f.puts jsondata.to_json
+        f.puts data.to_json
       end
+      return file_name
     rescue Exception => e
       raise "unable to save to jsonfile: #{e.message}"
     end
