@@ -66,7 +66,7 @@ module DataCollector
       case payload.class.name
       when 'Proc'
         data = input_data.is_a?(Array) ? input_data : [input_data]
-        output_data = if normalized_options.empty?
+        output_data = if normalized_options.empty? && payload.parameters.size == 1
                         # data.map { |d| payload.curry.call(d).call(d) }
                         data.map { |d|
                           loop do
