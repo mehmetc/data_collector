@@ -1,14 +1,12 @@
 # DataCollector
-Convenience module to Extract, Transform and Load your data in a Pipeline.
+Convenience module to Extract, Transform and Load data in a Pipeline.
 The 'INPUT', 'OUTPUT' and 'FILTER' object will help you to read, transform and output your data.
-Support objects like CONFIG, LOG, ERROR, RULES. Will help you to write manageable rules to transform and log your data.
+Support objects like CONFIG, LOG, ERROR, RULES help you to write manageable rules to transform and log your data.
 Include the DataCollector::Core module into your application gives you access to these objects.
 ```ruby
 include DataCollector::Core
 ```
-
 Every object can be used on its own.
-
 
 #### Pipeline
 Allows you to create a simple pipeline of operations to process data. With a data pipeline, you can collect, process, and transform data, and then transfer it to various systems and applications.
@@ -28,14 +26,27 @@ executed in the [ISO8601 duration format](https://www.digi.com/resources/documen
  - .on_message: handle to run every time a trigger event happens
 ###### example:
 ```ruby
-#create a pipline scheduled to run every 10 minutes
+#create a pipeline scheduled to run every 10 minutes
 pipeline = Pipeline.new(schedule: 'PT10M')
 
 pipeline.on_message do |input, output|
-  # logic
+  data = input.from_uri("https://dummyjson.com/comments?limit=10")
+  # process data
 end
 
 pipeline.run
+```
+
+```ruby
+#create a pipeline to listen and process files in a directory
+extract = DataCollector::Pipeline.new(name: 'extract', uri: 'file://./data/in')
+
+extract.on_message do |input, output, filename|
+  data = input.from_uri("file://#{filename}")
+  # process data
+end
+
+extract.run
 ```
 
 #### input
@@ -60,7 +71,7 @@ A push happens when new data is created in a directory, message queue, ...
     input.from_uri("http://www.libis.be/record.jsonld", content_type: 'application/ld+json')
 
 # read data from a RabbitMQ queue
-    listener = input.from_uri('amqp://user:password@localhost?channel=hello')
+    listener = input.from_uri('amqp://user:password@localhost?channel=hello&queue=world')
     listener.on_message do |input, output, message| 
       puts message
     end
@@ -94,6 +105,30 @@ Output is an object you can store key/value pairs that needs to be written to an
     output[:last_name] = 'Doe'
 ```    
 
+```ruby
+# get all keys from the output object
+    output.keys
+    output.key?(:name)
+    output.each do |k,v|
+      puts "#{k}:#{v}"      
+    end
+```
+```ruby
+# add hash to output
+    output << { age: 22 }
+
+    puts output[:age]
+# # 22
+```
+```ruby
+# add array to output
+    output << [1,2,3,4]
+    puts output.keys
+# # datap
+    puts output['datap']
+# # [1, 2, 3, 4]
+```
+
 Write output to a file, string use an ERB file as a template
 example:
 ___test.erb___
@@ -116,25 +151,34 @@ will produce
 Into a variable
 ```ruby
     result = output.to_s("test.erb")
+#template is optional
+    result = output.to_s
 ```  
 
-Into a file stored in records dir
+Into a file
 ```ruby
-    output.to_file("test.erb")
+    output.to_uri("file://data.xml", {template: "test.erb", content_type: "application/xml"})
+#template is optional
+    output.to_uri("file://data.json", {content_type: "application/json"})
 ``` 
 
 Into a tar file stored in data
 ```ruby
-    output.to_file("test.erb", "my_data.tar.gz")
+# create a tar file with a random name
+    data = output.to_uri("file://data.json", {content_type: "application/json", tar:true})
+#choose
+    data = output.to_uri("file://./test.json", {template: "test.erb", content_type: 'application/json', tar_name: "test.tar.gz"}) 
 ```    
 
 Other output methods
 ```ruby
 output.raw
 output.clear
-output.to_tmp_file("test.erb", "tmp_data")
-output.to_jsonfile(data, "test")
+output.to_xml
+output.to_json
 output.flatten
+output.crush
+output.keys
 ```
 
 Into a temp directory

@@ -4,7 +4,7 @@ require 'listen'
 module DataCollector
   class Input
     class Dir < Generic
-      def initialize(uri, options)
+      def initialize(uri, options = {})
         super
       end
 
@@ -18,7 +18,7 @@ module DataCollector
         @listener ||= Listen.to("#{@uri.host}/#{@uri.path}", @options) do |modified, added, _|
           files = added | modified
           files.each do |filename|
-            handle_on_message(input, output, filename)
+            handle_on_message(@input, @output, filename)
           end
         end
       end

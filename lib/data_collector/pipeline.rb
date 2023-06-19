@@ -12,7 +12,7 @@ module DataCollector
       @run_count = 0
 
       @schedule = options[:schedule] || {}
-      @name = options[:name] || "#{Time.now.to_i}-#{rand(10000)}"
+      @name = options[:name] || "pipeline-#{Time.now.to_i}-#{rand(10000)}"
       @options = options
       @listeners = []
     end

@@ -12,7 +12,7 @@ class DataCollectorUriTest < Minitest::Test
       headers: {
         'Connection' => 'close',
         'Host' => 'www.example.com',
-        'User-Agent' => 'http.rb/5.1.0'
+        'User-Agent' => 'http.rb/5.1.1'
       }).to_return(status: 200, body: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
   <collection>
       <record>apple</record>
@@ -35,7 +35,7 @@ class DataCollectorUriTest < Minitest::Test
         headers: {
           'Connection'=>'close',
           'Host'=>'www.example.com',
-          'User-Agent'=>'http.rb/5.1.0'
+          'User-Agent'=>'http.rb/5.1.1'
         }).
       to_return(status: 200, body: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
       <collection>
@@ -60,7 +60,7 @@ class DataCollectorUriTest < Minitest::Test
           'Authorization'=>'Bearer ABCDEfghijKLMNOpqrsTUVWXYZ',
           'Connection'=>'close',
           'Host'=>'www.example.com',
-          'User-Agent'=>'http.rb/5.1.0'
+          'User-Agent'=>'http.rb/5.1.1'
         }).
       to_return(status: 200, body: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
       <collection>

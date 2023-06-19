@@ -2,10 +2,12 @@ require_relative 'generic'
 require 'bunny'
 require 'active_support/core_ext/hash'
 require 'ostruct'
+require 'securerandom'
+require 'thread'
 
 module DataCollector
   class Input
-    class Queue < Generic
+    class Rpc < Generic
       def initialize(uri, options = {})
         super
 
@@ -18,17 +20,28 @@ module DataCollector
         @listener.open?
       end
 
-      def send(route, message)
+      def send(reply_to, message)
+        correlation_id = SecureRandom.uuid
         if running?
-          @exchange.publish(message, routing_key: route)
+          @exchange.publish(message,
+                            routing_key: reply_to,
+                            correlation_id: correlation_id)
         end
       end
 
       private
 
+      def create_exchange
+        @exchange ||= begin
+                        create_channel
+                        @channel.topic(@bunny_channel, auto_delete: true)
+                      end
+      end
       def create_listener
+        parse_uri
+
         @listener ||= begin
-                        connection = Bunny.new(@uri.to_s)
+                        connection = Bunny.new(@bunny_uri.to_s)
                         connection.start
 
                         connection
@@ -37,26 +50,16 @@ module DataCollector
                       end
       end
 
-      def create_exchange
-        @exchange ||= begin
-                        options = CGI.parse(@uri.query).with_indifferent_access
-                        raise DataCollector::Error, '"channel" query parameter missing from uri.' unless options.include?(:channel)
-                        create_channel
-                        @channel.topic(options[:channel].first, auto_delete: true)
-                      end
-      end
-
       def create_channel
+        create_listener
         raise DataCollector::Error, 'Connection to RabbitMQ is closed' if @listener.closed?
         @channel ||= @listener.create_channel
       end
 
       def create_queue
         @queue ||= begin
-                     options = CGI.parse(@uri.query).with_indifferent_access
-                     raise DataCollector::Error, '"queue" query parameter missing from uri.' unless options.include?(:queue)
                      create_exchange
-                     queue = @channel.queue(options[:queue].first).bind(@exchange, routing_key: "#{options[:queue].first}.#")
+                     queue = @channel.queue(@bunny_queue).bind(@exchange, routing_key: "#{@bunny_queue}.#")
 
                      queue.subscribe(consumer_tag: @name) do |delivery_info, metadata, payload|
                        handle_on_message(@input, @output, OpenStruct.new(info: delivery_info, properties: metadata, body: payload))
@@ -64,6 +67,16 @@ module DataCollector
 
                      queue
                    end
+      end
+
+      def parse_uri
+        raise 'URI must be of format rpc+amqp://user:password@host/exchange/queue' unless @uri.path =~ /\// && @uri.path.split('/').length == 3
+
+        @bunny_channel = @uri.path.split('/')[1]
+        @bunny_queue   = @uri.path.split('/')[2]
+        @bunny_uri = @uri.clone
+        @bunny_uri.path=''
+        @bunny_uri.scheme='amqp'
       end
     end
   end

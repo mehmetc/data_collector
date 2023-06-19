@@ -3,13 +3,14 @@ require 'listen'
 module DataCollector
   class Input
     class Generic
-      def initialize(uri, options)
+      def initialize(uri, options = {})
         @uri = uri
         @options = options
 
         @input = DataCollector::Input.new
         @output = DataCollector::Output.new
 
+        @name = options[:name] || "input-#{Time.now.to_i}-#{rand(10000)}"
         @listener = create_listener
       end
 

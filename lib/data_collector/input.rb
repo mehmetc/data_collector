@@ -14,6 +14,8 @@ require 'minitar'
 require 'csv'
 require_relative 'input/dir'
 require_relative 'input/queue'
+require_relative 'input/rpc/client'
+require_relative 'input/rpc/server'
 
 #require_relative 'ext/xml_utility_node'
 module DataCollector
@@ -26,7 +28,7 @@ module DataCollector
 
     def from_uri(source, options = {})
       source = CGI.unescapeHTML(source)
-      @logger.info("Loading #{source}")
+      @logger.info("Reading #{source}")
       uri = URI(source)
       begin
         data = nil
@@ -43,8 +45,12 @@ module DataCollector
             raise DataCollector::Error, "#{uri.host}/#{uri.path} not found" unless File.exist?("#{uri.host}/#{uri.path}")
             data = from_file(uri, options)
           end
-        when 'amqp'
-          data = from_queue(uri,options)
+        when /amqp/
+          if uri.scheme =~ /^rpc/
+            data = from_rpc(uri, options)
+          else
+            data = from_queue(uri, options)
+          end
         else
           raise "Do not know how to process #{source}"
         end
@@ -103,7 +109,7 @@ module DataCollector
       end
 
       case http_response.code
-      when 200
+      when 200..299
         @raw = data = http_response.body.to_s
 
         # File.open("#{rand(1000)}.xml", 'wb') do |f|
@@ -132,6 +138,8 @@ module DataCollector
         end
       when 401
         raise 'Unauthorized'
+      when 403
+        raise 'Forbidden'
       when 404
         raise 'Not found'
       else
@@ -176,6 +184,14 @@ module DataCollector
 
     def from_queue(uri, options = {})
       DataCollector::Input::Queue.new(uri, options)
+    end
+
+    def from_rpc(uri, options = {})
+      if uri.to_s =~ /client/
+        DataCollector::Input::Rpc::Client.new(uri, options)
+      elsif uri.to_s =~ /server/
+        DataCollector::Input::Rpc::Server.new(uri, options)
+      end
     end
 
     def xml_to_hash(data)

@@ -16,7 +16,7 @@ class DataCollectorInputTest < Minitest::Test
       headers: {
         'Connection' => 'close',
         'Host' => 'www.example.com',
-        'User-Agent' => 'http.rb/5.1.0'
+        'User-Agent' => 'http.rb/5.1.1'
       }).to_return(status: 200, body: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
   <collection>
       <record>apple</record>
@@ -59,18 +59,25 @@ class DataCollectorInputTest < Minitest::Test
 
   def test_input_from_uri_message
 
-    consumer = input.from_uri('amqp://user:password@localhost?channel=resolv')
+    consumer = input.from_uri('amqp://user:password@localhost?channel=resolv&queue=test')
     consumer.on_message do |input, output, message| #subscribe
       puts message
-      assert_equal(message, 'abc')
+      assert_equal(message.body, 'abc')
     end
 
     consumer.run
 
-    consumer.send('abc')
+    consumer.send('test','abc')
 
     sleep 1
 
     consumer.stop
+  end
+
+  def test_input_from_rpc_message
+    producer = output.to_uri('rpc+amqp://user:password@localhost/resolver/admin')
+    consumer = input.from_uri('rpc+amqp://user:password@localhost/resolver/admin')
+
+    pp consumer
   end
 end
