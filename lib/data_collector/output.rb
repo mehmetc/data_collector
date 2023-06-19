@@ -242,22 +242,21 @@ module DataCollector
 
     private
 
-    def deep_compact(data)
+    def deep_compact( data )
       if data.is_a?(Hash)
         # puts " - Hash - #{data}"
         data.compact!
         data.each { |k, v| data[k] = deep_compact(v) }
         data.compact!
-        data
       elsif data.is_a?(Array)
         # puts " - Array - #{data}"
-        data.each { |v| deep_compact(v) }
-        data.empty? ? nil : data
-        # puts " - Array size- #{data.size}"
+        data.map! { |v| deep_compact(v) }
+        data.compact!
+        #puts " - Array size- #{data.size}"
         data.size == 1 ? data[0] : data
       elsif data.is_a?(String)
         # puts " - String - #{data}"
-        data.blank? ? nil : data
+        data.strip.blank? ? nil : data
       else
         data
       end

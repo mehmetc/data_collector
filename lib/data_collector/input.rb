@@ -136,6 +136,9 @@ module DataCollector
             data = xml_to_hash(data)
           end
         end
+
+        raise '206 Partial Content' if http_response.code ==206
+
       when 401
         raise 'Unauthorized'
       when 403
@@ -146,6 +149,7 @@ module DataCollector
         raise "Unable to process received status code = #{http_response.code}"
       end
 
+      #[data, http_response.code]
       data
     end
 
