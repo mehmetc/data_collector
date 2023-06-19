@@ -174,7 +174,7 @@ Other output methods
 ```ruby
 output.raw
 output.clear
-output.to_xml
+output.to_xml(template: 'test.erb', root: 'record') # root defaults to 'data'
 output.to_json
 output.flatten
 output.crush

@@ -221,7 +221,8 @@ module DataCollector
           config.noblanks
         end
       else
-        xml_result = Nokogiri::XML(@data.to_xml(root:'data'), nil, 'UTF-8') do |config|
+        xml_root = options[:root] || 'data'
+        xml_result = Nokogiri::XML(@data.to_xml(root: xml_root), nil, 'UTF-8') do |config|
           config.noblanks
         end
       end

@@ -56,12 +56,12 @@ class DataCollectorInputTest < Minitest::Test
     output['b']=2
     output['c']=3
 
-    data_out = output.to_uri("file://./test.xml", {content_type: 'application/xml'})
-    assert_equal(output.to_xml, data_out)
+    data_out = output.to_uri("file://./test.xml", {content_type: 'application/xml', root: 'record'})
+    assert_equal(output.to_xml(root: 'record'), data_out)
     input = DataCollector::Input.new
     data_in = input.from_uri("file://./test.xml", {content_type: 'application/xml'})
 
-    assert_equal(data_out, data_in['data'].to_xml(root: 'data'))
+    assert_equal(data_out, data_in['record'].to_xml(root: 'record'))
     File.unlink('./test.xml') if File.exist?('./test.xml')
   end
 
