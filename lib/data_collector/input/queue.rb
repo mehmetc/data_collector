@@ -56,7 +56,7 @@ module DataCollector
                      options = CGI.parse(@uri.query).with_indifferent_access
                      raise DataCollector::Error, '"queue" query parameter missing from uri.' unless options.include?(:queue)
                      create_exchange
-                     queue = @channel.queue(options[:queue].first).bind(@exchange, routing_key: "#{options[:queue].first}.#")
+                     queue = @channel.queue(options[:queue].first, auto_delete: true).bind(@exchange, routing_key: "#{options[:queue].first}.#")
 
                      queue.subscribe(consumer_tag: @name) do |delivery_info, metadata, payload|
                        handle_on_message(@input, @output, OpenStruct.new(info: delivery_info, properties: metadata, body: payload))

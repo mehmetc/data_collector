@@ -75,14 +75,14 @@ A push happens when new data is created in a directory, message queue, ...
     listener.on_message do |input, output, message| 
       puts message
     end
-    listener.start
+    listener.run
 
 # read data from a directory
     listener = input.from_uri('file://this/is/directory')
     listener.on_message do |input, output, filename|
       puts filename
     end
-    listener.start
+    listener.run
 ```
 
 Inputs can be JSON, XML or CSV or XML in a TAR.GZ file   

@@ -6,17 +6,18 @@ module DataCollector
       def initialize(uri, options = {})
         @uri = uri
         @options = options
+        @running = false
 
         @input = DataCollector::Input.new
         @output = DataCollector::Output.new
 
         @name = options[:name] || "input-#{Time.now.to_i}-#{rand(10000)}"
-        @listener = create_listener
+        create_listener
       end
 
       def run(should_block = false, &block)
         raise DataCollector::Error, 'Please supply a on_message block' if @on_message_callback.nil?
-        @listener.start
+        @running = true
 
         if should_block
           while running?
@@ -38,11 +39,11 @@ module DataCollector
       end
 
       def running?
-        @listener.running?
+        @running
       end
 
       def stopped?
-        @listener.stopped?
+        @running == false
       end
 
       def paused?

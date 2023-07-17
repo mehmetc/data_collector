@@ -7,6 +7,7 @@ require 'zlib'
 require 'cgi'
 require 'active_support/core_ext/hash'
 require 'fileutils'
+require_relative './output/rpc'
 
 module DataCollector
   class Output
@@ -195,7 +196,11 @@ module DataCollector
         when 'file'
           data = to_file(uri, options)
         when /amqp/
-
+          if uri.scheme =~ /^rpc/
+            data = to_rpc(uri, options)
+          else
+            data = to_queue(uri, options)
+          end
         else
           raise "Do not know how to process #{source}"
         end
@@ -238,6 +243,14 @@ module DataCollector
       end
 
       result.to_json
+    end
+
+    def to_rpc(uri, options = {})
+      DataCollector::Output::Rpc.new(uri, options)
+    end
+
+    def to_queueto_rpc(uri, options = {})
+      raise "to be implemented"
     end
 
     private

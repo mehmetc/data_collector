@@ -137,6 +137,11 @@ module DataCollector
     end
     module_function :error
 
+    def logger
+      @logger ||= Logger.new(STDOUT)
+    end
+    module_function :logger
+
   end
 
 end

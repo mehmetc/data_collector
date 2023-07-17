@@ -74,10 +74,4 @@ class DataCollectorInputTest < Minitest::Test
     consumer.stop
   end
 
-  def test_input_from_rpc_message
-    producer = output.to_uri('rpc+amqp://user:password@localhost/resolver/admin')
-    consumer = input.from_uri('rpc+amqp://user:password@localhost/resolver/admin')
-
-    pp consumer
-  end
 end

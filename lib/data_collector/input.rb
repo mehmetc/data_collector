@@ -14,8 +14,7 @@ require 'minitar'
 require 'csv'
 require_relative 'input/dir'
 require_relative 'input/queue'
-require_relative 'input/rpc/client'
-require_relative 'input/rpc/server'
+require_relative 'input/rpc'
 
 #require_relative 'ext/xml_utility_node'
 module DataCollector
@@ -191,11 +190,7 @@ module DataCollector
     end
 
     def from_rpc(uri, options = {})
-      if uri.to_s =~ /client/
-        DataCollector::Input::Rpc::Client.new(uri, options)
-      elsif uri.to_s =~ /server/
-        DataCollector::Input::Rpc::Server.new(uri, options)
-      end
+      DataCollector::Input::Rpc.new(uri, options)
     end
 
     def xml_to_hash(data)

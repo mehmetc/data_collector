@@ -1,5 +1,5 @@
 require_relative 'generic'
-require 'bunny'
+require 'bunny_burrow'
 require 'active_support/core_ext/hash'
 require 'ostruct'
 require 'securerandom'
@@ -10,63 +10,53 @@ module DataCollector
     class Rpc < Generic
       def initialize(uri, options = {})
         super
-
-        if running?
-          create_queue unless @queue
-        end
       end
 
       def running?
-        @listener.open?
+        @running
       end
 
-      def send(reply_to, message)
-        correlation_id = SecureRandom.uuid
+      def stop
         if running?
-          @exchange.publish(message,
-                            routing_key: reply_to,
-                            correlation_id: correlation_id)
+          @listener.shutdown
+          @running = false
         end
       end
 
+      def pause
+        raise "PAUSE not implemented."
+      end
+
+
+
+      def run(should_block = false, &block)
+          @listener.subscribe(@bunny_queue) do |payload|
+            payload = JSON.parse(payload)
+            response = BunnyBurrow::Server.create_response
+            response[:data] = handle_on_message(@input, @output, payload)
+
+            response
+          end
+          @running = true
+
+          if should_block
+            while running?
+              yield block if block_given?
+              @listener.wait
+            end
+          else
+            yield block if block_given?
+          end
+      end
+
       private
-
-      def create_exchange
-        @exchange ||= begin
-                        create_channel
-                        @channel.topic(@bunny_channel, auto_delete: true)
-                      end
-      end
       def create_listener
-        parse_uri
-
-        @listener ||= begin
-                        connection = Bunny.new(@bunny_uri.to_s)
-                        connection.start
-
-                        connection
-                      rescue StandardError => e
-                        raise DataCollector::Error, "Unable to connect to RabbitMQ. #{e.message}"
-                      end
-      end
-
-      def create_channel
-        create_listener
-        raise DataCollector::Error, 'Connection to RabbitMQ is closed' if @listener.closed?
-        @channel ||= @listener.create_channel
-      end
-
-      def create_queue
-        @queue ||= begin
-                     create_exchange
-                     queue = @channel.queue(@bunny_queue).bind(@exchange, routing_key: "#{@bunny_queue}.#")
-
-                     queue.subscribe(consumer_tag: @name) do |delivery_info, metadata, payload|
-                       handle_on_message(@input, @output, OpenStruct.new(info: delivery_info, properties: metadata, body: payload))
-                     end if queue
-
-                     queue
-                   end
+        @listener ||= BunnyBurrow::Server.new do |server|
+          parse_uri
+          server.rabbitmq_url = @bunny_uri.to_s
+          server.rabbitmq_exchange = @bunny_channel
+          server.logger = DataCollector::Core.logger
+        end
       end
 
       def parse_uri
