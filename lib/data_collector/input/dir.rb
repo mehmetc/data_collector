@@ -26,7 +26,7 @@ module DataCollector
       private
 
       def create_listener
-        absolute_path = File.absolute_path("#{URI.decode_uri_component(@uri.to_s)}")
+        absolute_path = File.absolute_path("#{@uri.host}#{@uri.path}")
         raise DataCollector::Error, "#{@uri.to_s} not found" unless File.exist?(absolute_path)
 
         @listener ||= Listen.to(absolute_path, @options) do |modified, added, _|

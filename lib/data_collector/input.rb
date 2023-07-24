@@ -160,7 +160,8 @@ module DataCollector
 
     def from_file(uri, options = {})
       data = nil
-      absolute_path = File.absolute_path("#{URI.decode_uri_component(uri.to_s)}")
+      uri = normalize_uri(uri)
+      absolute_path = File.absolute_path(uri)
       raise DataCollector::Error, "#{uri.to_s} not found" unless File.exist?("#{absolute_path}")
       unless options.has_key?('raw') && options['raw'] == true
         @raw = data = File.read("#{absolute_path}")
@@ -233,5 +234,8 @@ module DataCollector
       return file_type
     end
 
+    def normalize_uri(uri)
+      "#{URI.decode_uri_component(uri.host)}#{URI.decode_uri_component(uri.path)}"
+    end
   end
 end
