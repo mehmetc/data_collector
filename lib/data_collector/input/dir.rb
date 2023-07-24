@@ -9,8 +9,14 @@ module DataCollector
       end
 
       def run(should_block = false, &block)
-        @listener.start
-        sleep if should_block
+        @listener.start unless running?
+        if block_given?
+          while should_block && !paused?
+            yield
+          end
+        else
+          sleep if should_block && running? && !paused?
+        end
       end
 
       def running?
@@ -20,7 +26,10 @@ module DataCollector
       private
 
       def create_listener
-        @listener ||= Listen.to("#{@uri.host}#{@uri.path}", @options) do |modified, added, _|
+        absolute_path = File.absolute_path("#{URI.decode_uri_component(@uri.to_s)}")
+        raise DataCollector::Error, "#{@uri.to_s} not found" unless File.exist?(absolute_path)
+
+        @listener ||= Listen.to(absolute_path, @options) do |modified, added, _|
           files = added | modified
           files.each do |filename|
             handle_on_message(@input, @output, filename)

@@ -4,7 +4,7 @@ module DataCollector
   class Input
     class Generic
       def initialize(uri, options = {})
-        @uri = uri
+        @uri = URI(URI.decode_uri_component(uri.to_s))
         @options = options
         @running = false
 

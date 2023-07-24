@@ -28,6 +28,10 @@ module DataCollector
     def from_uri(source, options = {})
       source = CGI.unescapeHTML(source)
       @logger.info("Reading #{source}")
+      raise DataCollector::Error 'from_uri expects a scheme like file:// of https://' unless source =~ /:\/\//
+
+      scheme, path = source.split('://')
+      source="#{scheme}://#{URI.encode_uri_component(path)}"
       uri = URI(source)
       begin
         data = nil
@@ -37,11 +41,12 @@ module DataCollector
         when 'https'
           data = from_https(uri, options)
         when 'file'
-          if File.directory?("#{uri.host}/#{uri.path}")
-            raise DataCollector::Error, "#{uri.host}/#{uri.path} not found" unless File.exist?("#{uri.host}/#{uri.path}")
+          absolute_path = File.absolute_path("#{URI.decode_uri_component("#{uri.host}#{uri.path}")}")
+          if File.directory?(absolute_path)
+            #raise DataCollector::Error, "#{uri.host}/#{uri.path} not found" unless File.exist?("#{uri.host}/#{uri.path}")
             return from_dir(uri, options)
           else
-            raise DataCollector::Error, "#{uri.host}/#{uri.path} not found" unless File.exist?("#{uri.host}/#{uri.path}")
+            #            raise DataCollector::Error, "#{uri.host}/#{uri.path} not found" unless File.exist?("#{uri.host}/#{uri.path}")
             data = from_file(uri, options)
           end
         when /amqp/
@@ -75,6 +80,7 @@ module DataCollector
     end
 
     def from_https(uri, options = {})
+      uri = URI.decode_uri_component("#{uri.to_s}")
       data = nil
       if options.with_indifferent_access.include?(:logging) && options.with_indifferent_access[:logging]
         HTTP.default_options = HTTP::Options.new(features: { logging: { logger: @logger } })
@@ -154,7 +160,8 @@ module DataCollector
 
     def from_file(uri, options = {})
       data = nil
-      absolute_path = File.absolute_path("#{uri.host}#{uri.path}")
+      absolute_path = File.absolute_path("#{URI.decode_uri_component(uri.to_s)}")
+      raise DataCollector::Error, "#{uri.to_s} not found" unless File.exist?("#{absolute_path}")
       unless options.has_key?('raw') && options['raw'] == true
         @raw = data = File.read("#{absolute_path}")
         case File.extname(absolute_path)

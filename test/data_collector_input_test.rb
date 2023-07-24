@@ -11,6 +11,11 @@ class DataCollectorInputTest < Minitest::Test
     assert_equal(3, data.size)
   end
 
+  def test_input_from_uri_file_non_standard_uri
+    data = DataCollector::Input.new.from_uri("file://test/fixtures/test[123].csv")
+    assert_equal(3, data.size)
+  end
+
   def test_input_from_uri_http
     stub_request(:get, "https://www.example.com/").with(
       headers: {
