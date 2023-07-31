@@ -15,6 +15,11 @@ You can set a schedule for pipelines that are triggered by new data, specifying 
 executed in the [ISO8601 duration format](https://www.digi.com/resources/documentation/digidocs//90001488-13/reference/r_iso_8601_duration_format.htm). The processing logic is then executed.   
 ###### methods:
  - .new(options): options can be schedule in [ISO8601 duration format](https://www.digi.com/resources/documentation/digidocs//90001488-13/reference/r_iso_8601_duration_format.htm)  and name
+   - options:
+     - name: pipeline name
+     - schedule: [ISO8601 duration format](https://www.digi.com/resources/documentation/digidocs//90001488-13/reference/r_iso_8601_duration_format.htm)
+     - cron: in cron format ex. '1 12 * * *' intervals are not supported
+     - uri: a directory/file to watch
  - .run: start the pipeline. blocking if a schedule is supplied
  - .stop: stop the pipeline
  - .pause: pause the pipeline. Restart using .run
@@ -36,6 +41,19 @@ end
 
 pipeline.run
 ```
+
+```ruby
+#create a pipeline scheduled to run every morning at 06:00 am
+pipeline = Pipeline.new(schedule: '0 6 * * *')
+
+pipeline.on_message do |input, output|
+  data = input.from_uri("https://dummyjson.com/comments?limit=10")
+  # process data
+end
+
+pipeline.run
+```
+
 
 ```ruby
 #create a pipeline to listen and process files in a directory

@@ -1,4 +1,5 @@
 require 'iso8601'
+require 'parse-cron'
 
 module DataCollector
   class Pipeline
@@ -12,6 +13,7 @@ module DataCollector
       @run_count = 0
 
       @schedule = options[:schedule] || {}
+      @cron = options[:cron || '']
       @name = options[:name] || "pipeline-#{Time.now.to_i}-#{rand(10000)}"
       @options = options
       @listeners = []
@@ -43,6 +45,20 @@ module DataCollector
 
           DataCollector::Core.log("PIPELINE running in #{interval.size} seconds")
           sleep interval.size
+          handle_on_message(@input, @output) unless paused?
+        end
+      elsif @cron && !@cron.empty?
+        cron_parser = CronParser.new(@cron)
+        while running?
+          @run_count += 1
+          start_time = ISO8601::DateTime.new(Time.now.to_datetime.to_s)
+          next_run = cron_parser.next(start_time.to_time)
+
+          interval = ISO8601::TimeInterval.from_datetimes(start_time,  ISO8601::DateTime.new(next_run.to_datetime.to_s))
+
+          DataCollector::Core.log("PIPELINE running at #{next_run.to_datetime.strftime('%Y-%m-%dT%H:%M:%S')} or in #{interval.size} seconds")
+          sleep interval.size
+
           handle_on_message(@input, @output) unless paused?
         end
       else # run once

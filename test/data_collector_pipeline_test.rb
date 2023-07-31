@@ -51,4 +51,24 @@ class DataCollectorPipelineTest < Minitest::Test
     assert_equal('PIPELINE - bad schedule: Unknown pattern Blabla', error.message)
   end
 
+  def test_scheduled_cron_pipeline
+    counter = 0
+    time = Time.now + 60
+    hour = time.hour
+    minutes = time.min
+
+    pipeline = DataCollector::Pipeline.new(cron: "#{minutes} #{hour} * * *")
+    pipeline.on_message do |input, output|
+      log('trigger cron')
+      count = output.key?(:counter) ? output[:counter] : 0
+      output[:counter] = count + 1
+      counter = output[:counter]
+      pipeline.stop if output[:counter] >= 1
+    end
+    pipeline.run
+
+    assert_equal(1, counter)
+  end
+
+
 end
