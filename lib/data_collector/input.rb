@@ -31,7 +31,7 @@ module DataCollector
       raise DataCollector::Error 'from_uri expects a scheme like file:// of https://' unless source =~ /:\/\//
 
       scheme, path = source.split('://')
-      source="#{scheme}://#{URI.encode_uri_component(path)}"
+      source="#{scheme}://#{URI.encode_www_form_component(path)}"
       uri = URI(source)
       begin
         data = nil
@@ -41,7 +41,7 @@ module DataCollector
         when 'https'
           data = from_https(uri, options)
         when 'file'
-          absolute_path = File.absolute_path("#{URI.decode_uri_component("#{uri.host}#{uri.path}")}")
+          absolute_path = File.absolute_path("#{URI.decode_www_form_component("#{uri.host}#{uri.path}")}")
           if File.directory?(absolute_path)
             #raise DataCollector::Error, "#{uri.host}/#{uri.path} not found" unless File.exist?("#{uri.host}/#{uri.path}")
             return from_dir(uri, options)
@@ -80,7 +80,7 @@ module DataCollector
     end
 
     def from_https(uri, options = {})
-      uri = URI.decode_uri_component("#{uri.to_s}")
+      uri = URI.decode_www_form_component("#{uri.to_s}")
       data = nil
       if options.with_indifferent_access.include?(:logging) && options.with_indifferent_access[:logging]
         HTTP.default_options = HTTP::Options.new(features: { logging: { logger: @logger } })
@@ -102,6 +102,16 @@ module DataCollector
         http = HTTP.auth(bearer)
       end
 
+      if options.key?(:cookies) 
+        @logger.debug  "Set cookies"
+        http = http.cookies( options[:cookies] )
+      end
+
+      if options.key?(:headers) 
+        @logger.debug  "Set http headers"
+        http = http.headers( options[:headers] )
+      end
+          
       if options.key?(:verify_ssl) && uri.scheme.eql?('https')
         @logger.warn "Disabling SSL verification. "
         #shouldn't use this but we all do ...
@@ -109,10 +119,11 @@ module DataCollector
         ctx.verify_mode = OpenSSL::SSL::VERIFY_NONE
 
         http_response = http.follow.get(escape_uri(uri), ssl_context: ctx)
+
       else
         http_response = http.follow.get(escape_uri(uri))
       end
-
+ 
       case http_response.code
       when 200..299
         @raw = data = http_response.body.to_s
@@ -235,7 +246,7 @@ module DataCollector
     end
 
     def normalize_uri(uri)
-      "#{URI.decode_uri_component(uri.host)}#{URI.decode_uri_component(uri.path)}"
+      "#{URI.decode_www_form_component(uri.host)}#{URI.decode_www_form_component(uri.path)}"
     end
   end
 end
