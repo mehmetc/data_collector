@@ -76,6 +76,32 @@ class DataCollectorUriTest < Minitest::Test
     assert_equal({"collection"=>{"record"=>["Capsicums", "Chilli peppers"]}},  output[:record])
   end
 
+  def test_from_https_with_bearer_token_headers_cookies
+    stub_request(:get, "https://www.example.com/").
+      with(
+        headers: {
+          'Authorization'=>'Bearer ABCDEfghijKLMNOpqrsTUVWXYZ',
+          'Cookie'=>'auth_token=auth_secret_cookie_token',
+          'Connection'=>'close',
+          'Host'=>'www.example.com',
+          'x-csrf-token' => 'secret_token',
+          'User-Agent'=>'Mozilla_test'
+        }).
+      to_return(status: 200, body: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+      <collection>
+          <record>Capsicums</record>
+          <record>Chilli peppers</record>
+      </collection>", headers: { "Content-type" => 'application/atom+xml;charset=UTF-8'  })
+
+    url = 'https://www.example.com'
+    options = {bearer_token: "ABCDEfghijKLMNOpqrsTUVWXYZ", headers: { "User-Agent" => "Mozilla_test", "x-csrf-token" => "secret_token" }, cookies: { :auth_token => "auth_secret_cookie_token"} }
+    data = input.from_uri(url, options)
+
+    output[:record] = data
+    assert_equal({"collection"=>{"record"=>["Capsicums", "Chilli peppers"]}},  output[:record])
+  end
+
+
   def test_from_uri
     data = input.from_uri('file://./test/fixtures/test.csv')
     data.map{ |m| m[:sequence] *=2; m }
