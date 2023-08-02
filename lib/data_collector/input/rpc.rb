@@ -55,7 +55,7 @@ module DataCollector
           parse_uri
           server.rabbitmq_url = @bunny_uri.to_s
           server.rabbitmq_exchange = @bunny_channel
-          server.logger = DataCollector::Core.logger
+          #server.logger = DataCollector::Core.logger
         end
       end
 
