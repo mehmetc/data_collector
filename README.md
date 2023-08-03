@@ -8,6 +8,7 @@ include DataCollector::Core
 ```
 Every object can be used on its own.
 
+### DataCollector Objects
 #### Pipeline
 Allows you to create a simple pipeline of operations to process data. With a data pipeline, you can collect, process, and transform data, and then transfer it to various systems and applications.
 
@@ -74,12 +75,14 @@ For a push input component, a listener is created with a processing logic block 
 A push happens when new data is created in a directory, message queue, ...
 
 ```ruby
-  from_uri(source, options = {:raw, :content_type})
+  from_uri(source, options = {:raw, :content_type, :headers, :cookies})
 ```
 - source: an uri with a scheme of http, https, file, amqp
 - options:
     - raw: _boolean_ do not parse
     - content_type: _string_ force a content_type if the 'Content-Type' returned by the http server is incorrect 
+    - headers: request headers
+    - cookies: session cookies etc.
 
 ###### example:
 ```ruby  
