@@ -21,6 +21,7 @@ executed in the [ISO8601 duration format](https://www.digi.com/resources/documen
      - schedule: [ISO8601 duration format](https://www.digi.com/resources/documentation/digidocs//90001488-13/reference/r_iso_8601_duration_format.htm)
      - cron: in cron format ex. '1 12 * * *' intervals are not supported
      - uri: a directory/file to watch
+     - xml_typecast: true/false -> convert convert string values to TrueClass, FalseClass, Time, Date, and DateTime
  - .run: start the pipeline. blocking if a schedule is supplied
  - .stop: stop the pipeline
  - .pause: pause the pipeline. Restart using .run

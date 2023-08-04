@@ -141,15 +141,15 @@ module DataCollector
           when 'application/json'
             data = JSON.parse(data)
           when 'application/atom+xml'
-            data = xml_to_hash(data)
+            data = xml_to_hash(data, options)
           when 'text/csv'
             data = csv_to_hash(data)
           when 'application/xml'
-            data = xml_to_hash(data)
+            data = xml_to_hash(data, options)
           when 'text/xml'
-            data = xml_to_hash(data)
+            data = xml_to_hash(data, options)
           else
-            data = xml_to_hash(data)
+            data = xml_to_hash(data, options)
           end
         end
 
@@ -182,14 +182,14 @@ module DataCollector
         when '.json'
           data = JSON.parse(data)
         when '.xml'
-          data = xml_to_hash(data)
+          data = xml_to_hash(data, options)
         when '.gz'
           Minitar.open(Zlib::GzipReader.new(File.open("#{absolute_path}", 'rb'))) do |i|
             i.each do |entry|
               data = entry.read
             end
           end
-          data = xml_to_hash(data)
+          data = xml_to_hash(data, options)
         when '.csv'
           data = csv_to_hash(data)
         else
@@ -212,10 +212,11 @@ module DataCollector
       DataCollector::Input::Rpc.new(uri, options)
     end
 
-    def xml_to_hash(data)
+    def xml_to_hash(data, options = {})
       #gsub('&lt;\/', '&lt; /') outherwise wrong XML-parsing (see records lirias1729192 )
       data = data.gsub /&lt;/, '&lt; /'
-      nori = Nori.new(parser: :nokogiri, strip_namespaces: true, convert_tags_to: lambda { |tag| tag.gsub(/^@/, '_') })
+      xml_typecast = options.with_indifferent_access.key?('xml_typecast') ? options.with_indifferent_access['xml_typecast'] : true
+      nori = Nori.new(parser: :nokogiri, advanced_typecasting: xml_typecast, strip_namespaces: true, convert_tags_to: lambda { |tag| tag.gsub(/^@/, '_') })
       nori.parse(data)
       #JSON.parse(nori.parse(data).to_json)
     end
