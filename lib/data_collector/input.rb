@@ -66,7 +66,13 @@ module DataCollector
         else
           data
         end
-      rescue => e
+      rescue DataCollector::InputError => e
+        @logger.info(e.message)
+        raise e
+      rescue DataCollector::Error => e
+        @logger.info(e.message)
+        nil
+      rescue StandardError => e
         @logger.info(e.message)
         puts e.backtrace.join("\n")
         nil
@@ -156,13 +162,13 @@ module DataCollector
         raise '206 Partial Content' if http_response.code ==206
 
       when 401
-        raise 'Unauthorized'
+        raise DataCollector::InputError, 'Unauthorized'
       when 403
-        raise 'Forbidden'
+        raise DataCollector::InputError, 'Forbidden'
       when 404
-        raise 'Not found'
+        raise DataCollector::InputError, 'Not found'
       else
-        raise "Unable to process received status code = #{http_response.code}"
+        raise DataCollector::InputError, "Unable to process received status code = #{http_response.code}"
       end
 
       #[data, http_response.code]
