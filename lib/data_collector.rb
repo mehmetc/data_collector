@@ -10,5 +10,5 @@ require 'data_collector/ext/xml_utility_node'
 module DataCollector
   class Error < StandardError; end
 
-  class InputError < StandardError; end
+  class InputError < DataCollector::Error; end
 end

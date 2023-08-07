@@ -67,13 +67,13 @@ module DataCollector
           data
         end
       rescue DataCollector::InputError => e
-        @logger.info(e.message)
+        @logger.error(e.message)
         raise e
       rescue DataCollector::Error => e
-        @logger.info(e.message)
+        @logger.error(e.message)
         nil
       rescue StandardError => e
-        @logger.info(e.message)
+        @logger.error(e.message)
         puts e.backtrace.join("\n")
         nil
       end
