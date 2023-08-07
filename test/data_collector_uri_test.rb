@@ -100,7 +100,25 @@ class DataCollectorUriTest < Minitest::Test
     output[:record] = data
     assert_equal({"collection"=>{"record"=>["Capsicums", "Chilli peppers"]}},  output[:record])
   end
+  
+  def test_from_https_with_404
+    stub_request(:get, "https://www.example.com/404").with(
+      headers: {
+        'Connection' => 'close',
+        'Host' => 'www.example.com',
+        'User-Agent' => 'http.rb/5.1.1'
+      }).to_return(status: 404, body: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+  <error>
+      <status>404</status>
+  </error>", headers: { "content-type" => 'application/atom+xml;charset=UTF-8' })
 
+    url = 'https://www.example.com/404'
+    options = {}
+
+    assert_raises(DataCollector::InputError) do
+      data = input.from_uri(url, options)
+    end
+  end
 
   def test_from_uri
     data = input.from_uri('file://./test/fixtures/test.csv')
