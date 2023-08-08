@@ -28,7 +28,7 @@ module DataCollector
     def from_uri(source, options = {})
       source = CGI.unescapeHTML(source)
       @logger.info("Reading #{source}")
-      raise DataCollector::Error 'from_uri expects a scheme like file:// of https://' unless source =~ /:\/\//
+      raise DataCollector::Error, 'from_uri expects a scheme like file:// of https://' unless source =~ /:\/\//
 
       scheme, path = source.split('://')
       source="#{scheme}://#{URI.encode_www_form_component(path)}"
@@ -220,11 +220,11 @@ module DataCollector
 
     def xml_to_hash(data, options = {})
       #gsub('&lt;\/', '&lt; /') outherwise wrong XML-parsing (see records lirias1729192 )
+      data.force_encoding('UTF-8') #encode("UTF-8", invalid: :replace, replace: "")
       data = data.gsub /&lt;/, '&lt; /'
       xml_typecast = options.with_indifferent_access.key?('xml_typecast') ? options.with_indifferent_access['xml_typecast'] : true
       nori = Nori.new(parser: :nokogiri, advanced_typecasting: xml_typecast, strip_namespaces: true, convert_tags_to: lambda { |tag| tag.gsub(/^@/, '_') })
       nori.parse(data)
-      #JSON.parse(nori.parse(data).to_json)
     end
 
     def csv_to_hash(data)

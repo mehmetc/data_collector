@@ -8,7 +8,9 @@ require 'data_collector/pipeline'
 require 'data_collector/ext/xml_utility_node'
 
 module DataCollector
-  class Error < StandardError; end
+  class Error < StandardError
+  end
 
-  class InputError < DataCollector::Error; end
+  class InputError < Error
+  end
 end
