@@ -78,5 +78,23 @@ class DataCollectorInputTest < Minitest::Test
 
     consumer.stop
   end
+  def test_input_from_tar
+    sequence = 0
+    DataCollector::Input.new.from_uri("file://test/fixtures/test.tar.gz") do |data|
+      assert_equal(true, data.key?('data'))
+      assert_equal(true, data['data'].key?('item'))
+      pp data
+      sequence += 1
+    end
+    assert_equal(2, sequence)
+  end
+
+  def test_input_from_with_block
+    DataCollector::Input.new.from_uri("file://test/fixtures/test.csv") do |data|
+      puts data
+      assert_equal(["1", "2", "3"], data.map{|m| m[:sequence]})
+    end
+  end
+
 
 end

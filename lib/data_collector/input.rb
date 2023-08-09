@@ -1,4 +1,4 @@
-#encoding: UTF-8
+# encoding: UTF-8
 require 'http'
 require 'open-uri'
 require 'nokogiri'
@@ -16,7 +16,7 @@ require_relative 'input/dir'
 require_relative 'input/queue'
 require_relative 'input/rpc'
 
-#require_relative 'ext/xml_utility_node'
+# require_relative 'ext/xml_utility_node'
 module DataCollector
   class Input
     attr_reader :raw
@@ -25,13 +25,14 @@ module DataCollector
       @logger = Logger.new(STDOUT)
     end
 
-    def from_uri(source, options = {})
+    def from_uri(source, options = {}, &block)
+      block_consumed = false
       source = CGI.unescapeHTML(source)
       @logger.info("Reading #{source}")
       raise DataCollector::Error, 'from_uri expects a scheme like file:// of https://' unless source =~ /:\/\//
 
       scheme, path = source.split('://')
-      source="#{scheme}://#{URI.encode_www_form_component(path)}"
+      source = "#{scheme}://#{URI.encode_www_form_component(path)}"
       uri = URI(source)
       begin
         data = nil
@@ -43,11 +44,14 @@ module DataCollector
         when 'file'
           absolute_path = File.absolute_path("#{URI.decode_www_form_component("#{uri.host}#{uri.path}")}")
           if File.directory?(absolute_path)
-            #raise DataCollector::Error, "#{uri.host}/#{uri.path} not found" unless File.exist?("#{uri.host}/#{uri.path}")
             return from_dir(uri, options)
           else
-            #            raise DataCollector::Error, "#{uri.host}/#{uri.path} not found" unless File.exist?("#{uri.host}/#{uri.path}")
-            data = from_file(uri, options)
+            if block_given?
+              data = from_file(uri, options, &block)
+              block_consumed = true if data.is_a?(TrueClass)
+            else
+              data = from_file(uri, options)
+            end
           end
         when /amqp/
           if uri.scheme =~ /^rpc/
@@ -61,7 +65,7 @@ module DataCollector
 
         data = data.nil? ? 'no data found' : data
 
-        if block_given?
+        if block_given? && !block_consumed
           yield data
         else
           data
@@ -94,7 +98,7 @@ module DataCollector
 
       http = HTTP
 
-      #http.use(logging: {logger: @logger})
+      # http.use(logging: {logger: @logger})
 
       if options.key?(:user) && options.key?(:password)
         @logger.debug "Set Basic_auth"
@@ -102,34 +106,33 @@ module DataCollector
         password = options[:password]
         http = HTTP.basic_auth(user: user, pass: password)
       elsif options.key?(:bearer_token)
-        @logger.debug  "Set authorization bearer token"
+        @logger.debug "Set authorization bearer token"
         bearer = options[:bearer_token]
         bearer = "Bearer #{bearer}" unless bearer =~ /^Bearer /i
         http = HTTP.auth(bearer)
       end
 
-      if options.key?(:cookies) 
-        @logger.debug  "Set cookies"
-        http = http.cookies( options[:cookies] )
+      if options.key?(:cookies)
+        @logger.debug "Set cookies"
+        http = http.cookies(options[:cookies])
       end
 
-      if options.key?(:headers) 
-        @logger.debug  "Set http headers"
-        http = http.headers( options[:headers] )
+      if options.key?(:headers)
+        @logger.debug "Set http headers"
+        http = http.headers(options[:headers])
       end
-          
+
       if options.key?(:verify_ssl) && uri.scheme.eql?('https')
         @logger.warn "Disabling SSL verification. "
-        #shouldn't use this but we all do ...
+        # shouldn't use this but we all do ...
         ctx = OpenSSL::SSL::SSLContext.new
         ctx.verify_mode = OpenSSL::SSL::VERIFY_NONE
 
         http_response = http.follow.get(escape_uri(uri), ssl_context: ctx)
-
       else
         http_response = http.follow.get(escape_uri(uri))
       end
- 
+
       case http_response.code
       when 200..299
         @raw = data = http_response.body.to_s
@@ -159,7 +162,7 @@ module DataCollector
           end
         end
 
-        raise '206 Partial Content' if http_response.code ==206
+        raise '206 Partial Content' if http_response.code == 206
 
       when 401
         raise DataCollector::InputError, 'Unauthorized'
@@ -175,7 +178,7 @@ module DataCollector
       data
     end
 
-    def from_file(uri, options = {})
+    def from_file(uri, options = {}, &block)
       data = nil
       uri = normalize_uri(uri)
       absolute_path = File.absolute_path(uri)
@@ -190,12 +193,29 @@ module DataCollector
         when '.xml'
           data = xml_to_hash(data, options)
         when '.gz'
+          tar_data = []
           Minitar.open(Zlib::GzipReader.new(File.open("#{absolute_path}", 'rb'))) do |i|
             i.each do |entry|
-              data = entry.read
-            end
-          end
-          data = xml_to_hash(data, options)
+              next unless entry.typeflag.eql?('0')
+              if block_given?
+                data = xml_to_hash(entry.read, options)
+                yield data
+
+                data = true
+              else
+                tar_data << entry.read
+
+                if tar_data.length == 1
+                  data = xml_to_hash(tar_data.first, options)
+                else
+                  data = []
+                  tar_data.each do |d|
+                    data << xml_to_hash(d, options)
+                  end
+                end
+              end #block
+            end #entry
+          end #tar
         when '.csv'
           data = csv_to_hash(data)
         else
@@ -219,9 +239,12 @@ module DataCollector
     end
 
     def xml_to_hash(data, options = {})
-      #gsub('&lt;\/', '&lt; /') outherwise wrong XML-parsing (see records lirias1729192 )
-      data.force_encoding('UTF-8') #encode("UTF-8", invalid: :replace, replace: "")
+      # gsub('&lt;\/', '&lt; /') outherwise wrong XML-parsing (see records lirias1729192 )
+      return unless data.is_a?(String)
+      data.force_encoding('UTF-8')
+      data = data.encode("UTF-8", invalid: :replace, replace: "")
       data = data.gsub /&lt;/, '&lt; /'
+
       xml_typecast = options.with_indifferent_access.key?('xml_typecast') ? options.with_indifferent_access['xml_typecast'] : true
       nori = Nori.new(parser: :nokogiri, advanced_typecasting: xml_typecast, strip_namespaces: true, convert_tags_to: lambda { |tag| tag.gsub(/^@/, '_') })
       nori.parse(data)
@@ -245,7 +268,7 @@ module DataCollector
       file_type = if headers.include?('Content-Type')
                     headers['Content-Type'].split(';').first
                   else
-                    @logger.debug  "No Header content-type available"
+                    @logger.debug "No Header content-type available"
                     MIME::Types.of(filename_from(headers)).first.content_type
                   end
 
