@@ -6,6 +6,7 @@ require 'minitar'
 require 'zlib'
 require 'cgi'
 require 'active_support/core_ext/hash'
+require 'active_support/core_ext/array'
 require 'fileutils'
 require_relative './output/rpc'
 
