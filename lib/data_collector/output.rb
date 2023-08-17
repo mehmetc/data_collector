@@ -261,6 +261,7 @@ module DataCollector
         data.compact!
         data.each { |k, v| data[k] = deep_compact(v) }
         data.compact!
+        data
       elsif data.is_a?(Array)
         # puts " - Array - #{data}"
         data.map! { |v| deep_compact(v) }
