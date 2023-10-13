@@ -14,6 +14,8 @@ module DataCollector
 
       def running?
         @running
+      rescue StandardError => e
+        DataCollector::Core.error(e.message)
       end
 
       def stop
@@ -21,10 +23,14 @@ module DataCollector
           @listener.shutdown
           @running = false
         end
+      rescue StandardError => e
+        DataCollector::Core.error(e.message)
       end
 
       def pause
         raise "PAUSE not implemented."
+      rescue StandardError => e
+        DataCollector::Core.error(e.message)
       end
 
 
@@ -47,16 +53,23 @@ module DataCollector
           else
             yield block if block_given?
           end
+      rescue StandardError => e
+        DataCollector::Core.error(e.message)
       end
 
       private
-      def create_listener
+      def create_listener(log = false)
         @listener ||= BunnyBurrow::Server.new do |server|
           parse_uri
           server.rabbitmq_url = @bunny_uri.to_s
           server.rabbitmq_exchange = @bunny_channel
-          #server.logger = DataCollector::Core.logger
+
+          server.logger = DataCollector::Core.logger if log
         end
+
+        @listener
+      rescue StandardError => e
+        DataCollector::Core.error(e.message)
       end
 
       def parse_uri
