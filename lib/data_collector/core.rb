@@ -1,6 +1,6 @@
 # encoding: utf-8
 require 'jsonpath'
-require 'logger'
+require 'proxy_logger'
 
 require_relative 'input'
 require_relative 'output'
@@ -114,7 +114,7 @@ module DataCollector
 
       filtered
     rescue StandardError => e
-      @logger ||= Logger.new(STDOUT)
+      @logger ||= self.logger
       @logger.error("#{filter_path} failed: #{e.message}")
       []
     end
@@ -126,19 +126,25 @@ module DataCollector
     module_function :config
 
     def log(message)
-      @logger ||= Logger.new(STDOUT)
+      @logger ||= self.logger
       @logger.info(message)
     end
     module_function :log
 
     def error(message)
-      @logger ||= Logger.new(STDOUT)
+      @logger ||= self.logger
       @logger.error(message)
     end
     module_function :error
 
-    def logger
-      @logger ||= Logger.new(STDOUT)
+    def logger(*destinations)
+      @logger ||= begin
+                    destinations = STDOUT if destinations.nil? || destinations.empty?
+                    Logger.new(ProxyLogger.new(destinations))
+                  rescue StandardError => e
+                    puts "Unable to instantiate ProxyLogger: #{e.message}"
+                    Logger.new(STDOUT)
+                  end
     end
     module_function :logger
 

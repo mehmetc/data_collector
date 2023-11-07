@@ -46,7 +46,7 @@ pipeline.run
 
 ```ruby
 #create a pipeline scheduled to run every morning at 06:00 am
-pipeline = Pipeline.new(schedule: '0 6 * * *')
+pipeline = Pipeline.new(cron: '0 6 * * *')
 
 pipeline.on_message do |input, output|
   data = input.from_uri("https://dummyjson.com/comments?limit=10")
@@ -336,10 +336,22 @@ Log to stdout
     log("hello world")
 ```
 #### error
-Log an error
+Log an error to stdout
 ```ruby
     error("if you have an issue take a tissue")
 ```
+### logger
+Logs are by default written to Standard OUT. If you want to change where to log to.  
+```ruby
+f = File.open('/tmp/data.log', 'w')
+f.sync = true # do not buffer
+# add multiple log outputs
+logger(STDOUT, f)
+
+#write to both STDOUT and /tmp/data.log
+log('Hello world')
+```
+
 ## Example
 Input data ___test.csv___
 ```csv

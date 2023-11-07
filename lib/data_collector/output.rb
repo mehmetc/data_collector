@@ -252,7 +252,7 @@ module DataCollector
       DataCollector::Output::Rpc.new(uri, options)
     end
 
-    def to_queueto_rpc(uri, options = {})
+    def to_queue(uri, options = {})
       raise "to be implemented"
     end
 
