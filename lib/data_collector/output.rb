@@ -6,9 +6,11 @@ require 'minitar'
 require 'zlib'
 require 'cgi'
 require 'active_support/core_ext/hash'
+require 'active_support/core_ext/array'
 require "active_support/isolated_execution_state"
 require 'active_support/xml_mini'
 require 'fileutils'
+
 require_relative './output/rpc'
 
 module DataCollector
@@ -264,6 +266,7 @@ module DataCollector
         data.compact!
         data.each { |k, v| data[k] = deep_compact(v) }
         data.compact!
+        data
       elsif data.is_a?(Array)
         # puts " - Array - #{data}"
         data.map! { |v| deep_compact(v) }
