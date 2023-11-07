@@ -7,7 +7,10 @@ require 'zlib'
 require 'cgi'
 require 'active_support/core_ext/hash'
 require 'active_support/core_ext/array'
+require "active_support/isolated_execution_state"
+require 'active_support/xml_mini'
 require 'fileutils'
+
 require_relative './output/rpc'
 
 module DataCollector
@@ -42,10 +45,11 @@ module DataCollector
               @data[k] << v
             end
           else
-            @data[k] = v
-            # HELP: why am I creating an array here?
-            # t = data[k]
-            # data[k] = Array.new([t, v])
+            if v.is_a?(Array) # merge with array
+              @data[k] = [@data[k]] + v
+            else
+              @data[k] = v
+            end
           end
         else
           @data[k] = v
@@ -250,7 +254,7 @@ module DataCollector
       DataCollector::Output::Rpc.new(uri, options)
     end
 
-    def to_queueto_rpc(uri, options = {})
+    def to_queue(uri, options = {})
       raise "to be implemented"
     end
 

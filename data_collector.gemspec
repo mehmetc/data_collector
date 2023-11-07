@@ -36,18 +36,18 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
-  spec.add_runtime_dependency 'activesupport', '~> 6.1'
+  spec.add_runtime_dependency 'activesupport', '~> 7.0'
   spec.add_runtime_dependency 'http', '~> 5.1'
   spec.add_runtime_dependency 'json', '~> 2.6'
-  spec.add_runtime_dependency 'json-ld', '~> 3.2'
+  spec.add_runtime_dependency 'json-ld', '~> 3.3'
   spec.add_runtime_dependency 'jsonpath', '~> 1.1'
-  spec.add_runtime_dependency 'mime-types', '~> 3.4'
+  spec.add_runtime_dependency 'mime-types', '~> 3.5'
   spec.add_runtime_dependency 'minitar', '= 0.9'
   spec.add_runtime_dependency 'nokogiri', '~> 1.15'
   spec.add_runtime_dependency 'nori', '~> 2.6'
   spec.add_runtime_dependency 'iso8601', '~> 0.13'
   spec.add_runtime_dependency 'listen', '~> 3.8'
-  spec.add_runtime_dependency 'bunny', '~> 2.20'
+  spec.add_runtime_dependency 'bunny', '~> 2.22'
   spec.add_runtime_dependency 'bunny_burrow', '~> 1.5'
   spec.add_runtime_dependency 'builder', '~> 3.2'
   spec.add_runtime_dependency 'parse-cron', '~> 0.1'

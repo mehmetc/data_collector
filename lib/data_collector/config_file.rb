@@ -6,9 +6,19 @@ module DataCollector
   class ConfigFile
     @config = {}
     @config_file_path = ''
+    @config_file_name = 'config.yml'
+    @mtime = nil
 
     def self.version
-      '0.0.1'
+      '0.0.3'
+    end
+
+    def self.name
+      @config_file_name
+    end
+
+    def self.name=(config_file_name)
+      @config_file_name = config_file_name
     end
 
     def self.path
@@ -37,19 +47,27 @@ module DataCollector
       @config.include?(key)
     end
 
+    def self.keys
+      init
+      @config.keys
+    end
 
-    private_class_method def self.init
+    def self.init
       discover_config_file_path
-      if @config.empty?
-        config = YAML::load_file("#{path}/config.yml")
+      raise Errno::ENOENT, "#{@config_file_path}/config.yml Not Found. Set path to config.yml" unless File.exist?("#{@config_file_path}/config.yml")
+
+      ftime = File.exist?("#{@config_file_path}/config.yml") ? File.mtime("#{@config_file_path}/config.yml") : nil
+      if @config.empty? || @mtime != ftime
+        config = YAML::load_file("#{@config_file_path}/config.yml")
         @config = process(config)
       end
     end
 
-
-    private_class_method def self.discover_config_file_path
+    def self.discover_config_file_path
       if @config_file_path.nil? || @config_file_path.empty?
-        if File.exist?('config.yml')
+        if ENV.key?('CONFIG_FILE_PATH')
+          @config_file_path = ENV['CONFIG_FILE_PATH']
+        elsif File.exist?('config.yml')
           @config_file_path = '.'
         elsif File.exist?("config/config.yml")
           @config_file_path = 'config'
@@ -57,7 +75,7 @@ module DataCollector
       end
     end
 
-    private_class_method def self.process(config)
+    def self.process(config)
       new_config = {}
       config.each do |k, v|
         if config[k].is_a?(Hash)
@@ -68,5 +86,10 @@ module DataCollector
 
       new_config
     end
+
+    private_class_method :new
+    private_class_method :init
+    private_class_method :discover_config_file_path
+    private_class_method :process
   end
 end
