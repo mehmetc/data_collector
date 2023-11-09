@@ -6,7 +6,8 @@ require 'minitar'
 require 'zlib'
 require 'cgi'
 require 'active_support/core_ext/hash'
-require 'active_support/core_ext/array'
+# Volgende is deprecated vanaf 7.1
+#require 'active_support/core_ext/array'
 require "active_support/isolated_execution_state"
 require 'active_support/xml_mini'
 require 'fileutils'
