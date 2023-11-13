@@ -84,6 +84,8 @@ A push happens when new data is created in a directory, message queue, ...
     - content_type: _string_ force a content_type if the 'Content-Type' returned by the http server is incorrect 
     - headers: request headers
     - cookies: session cookies etc.
+    - method: http verb one of [GET, POST] defaul('GET')
+    - body: http post body
 
 ###### example:
 ```ruby  
@@ -91,6 +93,8 @@ A push happens when new data is created in a directory, message queue, ...
     input.from_uri("http://www.libis.be")
     input.from_uri("file://hello.txt")
     input.from_uri("http://www.libis.be/record.jsonld", content_type: 'application/ld+json')
+    input.from_uri("https://www.w3.org/TR/rdf12-turtle/examples/example1.ttl")
+    input.from_uri("https://dbpedia.org/sparql", body: "query=SELECT * WHERE {?sub ?pred ?obj} LIMIT 10", method:"POST", headers: {accept: "text/turtle"})
 
 # read data from a RabbitMQ queue
     listener = input.from_uri('amqp://user:password@localhost?channel=hello&queue=world')

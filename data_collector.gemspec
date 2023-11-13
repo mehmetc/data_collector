@@ -39,7 +39,6 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'activesupport', '~> 7.0'
   spec.add_runtime_dependency 'http', '~> 5.1'
   spec.add_runtime_dependency 'json', '~> 2.6'
-  spec.add_runtime_dependency 'json-ld', '~> 3.3'
   spec.add_runtime_dependency 'jsonpath', '~> 1.1'
   spec.add_runtime_dependency 'mime-types', '~> 3.5'
   spec.add_runtime_dependency 'minitar', '= 0.9'
@@ -51,6 +50,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'bunny_burrow', '~> 1.5'
   spec.add_runtime_dependency 'builder', '~> 3.2'
   spec.add_runtime_dependency 'parse-cron', '~> 0.1'
+  spec.add_runtime_dependency 'linkeddata', '~> 3.3'
 
   spec.add_development_dependency 'bundler', '~> 2.3'
   spec.add_development_dependency 'minitest', '~> 5.18'

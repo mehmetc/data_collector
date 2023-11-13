@@ -2,7 +2,7 @@
 require 'http'
 require 'open-uri'
 require 'nokogiri'
-require 'json/ld'
+require 'linkeddata'
 require 'nori'
 require 'uri'
 require 'logger'
@@ -122,15 +122,24 @@ module DataCollector
         http = http.headers(options[:headers])
       end
 
+      ctx = nil
+      http_query_options = {}
       if options.key?(:verify_ssl) && uri.scheme.eql?('https')
         @logger.warn "Disabling SSL verification. "
         # shouldn't use this but we all do ...
         ctx = OpenSSL::SSL::SSLContext.new
         ctx.verify_mode = OpenSSL::SSL::VERIFY_NONE
 
-        http_response = http.follow.get(escape_uri(uri), ssl_context: ctx)
+        http_query_options[:ssl_context] = ctx
+      end
+
+      if options.key?(:method) && options[:method].downcase.eql?('post')
+        raise DataCollector::InputError, "No body found, a POST request needs a body" unless options.key?(:body)
+        http_query_options[:body] = options[:body]
+
+        http_response = http.follow.post(escape_uri(uri), http_query_options)
       else
-        http_response = http.follow.get(escape_uri(uri))
+        http_response = http.follow.get(escape_uri(uri), http_query_options)
       end
 
       case http_response.code
@@ -157,6 +166,11 @@ module DataCollector
             data = xml_to_hash(data, options)
           when 'text/xml'
             data = xml_to_hash(data, options)
+          when 'text/turtle'
+            graph = RDF::Graph.new do |graph|
+              RDF::Turtle::Reader.new(data) {|reader| graph << reader}
+            end
+            data = JSON.parse(graph.dump(:jsonld, validate: false, standard_prefixes: true))
           else
             data = xml_to_hash(data, options)
           end
@@ -171,7 +185,7 @@ module DataCollector
       when 404
         raise DataCollector::InputError, 'Not found'
       else
-        raise DataCollector::InputError, "Unable to process received status code = #{http_response.code}"
+        raise DataCollector::InputError, "Unable to process received status code = #{http_response.code} error= #{http_response.body.to_s}"
       end
 
       #[data, http_response.code]
