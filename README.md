@@ -403,6 +403,13 @@ Should give as output
 </data>
 ```
 
+You can provide options to input.from_uri for better reading CSV formats these 
+are the same the Ruby [CSV](https://docs.ruby-lang.org/en/master/CSV.html#class-CSV-label-Options) class
+
+Loading a CSV file with **;** as the row seperator
+```ruby
+i = input.from_uri('https://support.staffbase.com/hc/en-us/article_attachments/360009197031/username.csv', col_sep: ';')
+```
 
 ## Installation
 

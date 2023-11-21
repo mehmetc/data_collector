@@ -161,7 +161,7 @@ module DataCollector
           when 'application/atom+xml'
             data = xml_to_hash(data, options)
           when 'text/csv'
-            data = csv_to_hash(data)
+            data = csv_to_hash(data, options)
           when 'application/xml'
             data = xml_to_hash(data, options)
           when 'text/xml'
@@ -231,7 +231,7 @@ module DataCollector
             end #entry
           end #tar
         when '.csv'
-          data = csv_to_hash(data)
+          data = csv_to_hash(data, options)
         else
           raise "Do not know how to process #{uri.to_s}"
         end
@@ -264,8 +264,15 @@ module DataCollector
       nori.parse(data)
     end
 
-    def csv_to_hash(data)
-      csv = CSV.parse(data, headers: true, header_converters: [:downcase, :symbol])
+    def csv_to_hash(data, options = {})
+      csv_option_keys = options.keys & CSV::DEFAULT_OPTIONS.keys
+      all_cvs_options = {headers: true, header_converters: [:downcase, :symbol]}
+
+      csv_option_keys.each do |k|
+        all_cvs_options[k] = options[k]
+      end
+
+      csv = CSV.parse(data, **all_cvs_options)
 
       csv.collect do |record|
         record.to_hash
