@@ -37,7 +37,7 @@ module DataCollector
     def self.[]=(key, value)
       init
       @config[key] = value
-      File.open("#{path}/config.yml", 'w') do |f|
+      File.open( File.join( path, name), 'w') do |f|
         f.puts @config.to_yaml
       end
     end
@@ -54,11 +54,12 @@ module DataCollector
 
     def self.init
       discover_config_file_path
-      raise Errno::ENOENT, "#{@config_file_path}/config.yml Not Found. Set path to config.yml" unless File.exist?("#{@config_file_path}/config.yml")
+      config_file = File.join( path, name)
+      raise Errno::ENOENT, "#{ config_file } Not Found. Set path to #{name}" unless File.exist?( config_file )
 
-      ftime = File.exist?("#{@config_file_path}/config.yml") ? File.mtime("#{@config_file_path}/config.yml") : nil
+      ftime = File.exist?( config_file ) ? File.mtime( config_file ) : nil
       if @config.empty? || @mtime != ftime
-        config = YAML::load_file("#{@config_file_path}/config.yml")
+        config = YAML::load_file( config_file )
         @config = process(config)
       end
     end
@@ -67,9 +68,9 @@ module DataCollector
       if @config_file_path.nil? || @config_file_path.empty?
         if ENV.key?('CONFIG_FILE_PATH')
           @config_file_path = ENV['CONFIG_FILE_PATH']
-        elsif File.exist?('config.yml')
+        elsif File.exist?(name)
           @config_file_path = '.'
-        elsif File.exist?("config/config.yml")
+        elsif File.exist?(  File.join( "config", name) )
           @config_file_path = 'config'
         end
       end
