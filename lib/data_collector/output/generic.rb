@@ -1,5 +1,7 @@
 require 'bunny_burrow'
+require_relative '../ext/base'
 require 'json'
+require 'active_support/core_ext/hash'
 
 module DataCollector
   class Output

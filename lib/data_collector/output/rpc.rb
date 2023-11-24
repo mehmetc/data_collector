@@ -20,12 +20,14 @@ module DataCollector
       end
 
       private
-      def create_producer
+      def create_producer(log = false)
         @producer ||= BunnyBurrow::Client.new do |client|
           parse_uri
           client.rabbitmq_url = @bunny_uri.to_s
           client.rabbitmq_exchange = @bunny_channel
-          client.logger = DataCollector::Core.logger
+          #client.connection_name = @name
+
+          client.logger = DataCollector::Core.logger if log
           @running = true
         end
       end

@@ -6,6 +6,7 @@ class DataCollectorRPCTest < Minitest::Test
     producer = output.to_uri('rpc+amqp://user:password@localhost/data_collector/test')
 
     listener.on_message do |i, o, payload|
+      puts "getting message"
       payload.to_i * 2
     end
 
