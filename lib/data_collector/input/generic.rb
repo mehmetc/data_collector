@@ -59,7 +59,7 @@ module DataCollector
 
       private
 
-      def create_listener
+      def create_listener(log = false)
         raise DataCollector::Error, 'Please implement a listener'
       end
 

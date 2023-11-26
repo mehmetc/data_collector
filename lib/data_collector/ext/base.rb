@@ -4,14 +4,14 @@ module BunnyBurrow
   class Connection
     include Singleton
     attr_reader :connection, :started
-    attr_accessor :verify_peer, :name, :rabbitmq_url
+    attr_accessor :verify_peer, :connection_name, :rabbitmq_url
 
     def initialize
       super
       @started = false
     end
     def connection
-      @connection ||= Bunny.new(@rabbitmq_url, verify_peer: @verify_peer, connection_name: @name)
+      @connection ||= Bunny.new(@rabbitmq_url, verify_peer: @verify_peer, connection_name: @connection_name)
       unless @started
         @connection.start
         @started = true
@@ -29,13 +29,13 @@ module BunnyBurrow
 
   class Base
     attr_accessor(
-      :name
+      :connection_name
     )
 
     private
 
     def connection
-      Connection.instance.name = @name
+      Connection.instance.connection_name = @connection_name
       Connection.instance.verify_peer = @verify_peer
       Connection.instance.rabbitmq_url = @rabbitmq_url
 
@@ -47,7 +47,7 @@ module BunnyBurrow
     end
 
     def channel
-      Connection.instance.name = @name
+      Connection.instance.connection_name = @connection_name
       Connection.instance.verify_peer = @verify_peer
       Connection.instance.rabbitmq_url = @rabbitmq_url
 

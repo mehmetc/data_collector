@@ -59,7 +59,7 @@ module DataCollector
           server.rabbitmq_url = @bunny_uri.to_s
           server.rabbitmq_exchange = @bunny_channel
 
-          #server.connection_name = @name
+          server.connection_name = @name
           server.logger = DataCollector::Core.logger if log
         end
 

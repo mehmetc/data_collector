@@ -25,7 +25,7 @@ module DataCollector
           parse_uri
           client.rabbitmq_url = @bunny_uri.to_s
           client.rabbitmq_exchange = @bunny_channel
-          #client.connection_name = @name
+          client.connection_name = @name
 
           client.logger = DataCollector::Core.logger if log
           @running = true
