@@ -17,6 +17,10 @@ module DataCollector
           @running = false
           @producer.shutdown
         end
+      rescue Bunny::ConnectionAlreadyClosed => e
+        DataCollector::Core.log(e.message)
+      rescue StandardError => e
+        DataCollector::Core.error(e.message)
       end
 
       private

@@ -182,7 +182,7 @@ module DataCollector
       raise "unable to save to file: #{e.message}"
     end
 
-    def to_jsonfile (jsondata, jsonfile)
+    def to_jsonfile(jsondata, jsonfile)
       raise '[DEPRECATED] `to_jsonfile` deprecated. Please use `to_uri("file://abc.json", {template: "template.erb", content_type: "application/json"})` instead'
     rescue Exception => e
       raise "unable to save to jsonfile: #{e.message}"

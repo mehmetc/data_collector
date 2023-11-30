@@ -18,6 +18,8 @@ module DataCollector
           @listener.shutdown
           @running = false
         end
+      rescue Bunny::ConnectionAlreadyClosed => e
+        DataCollector::Core.log(e.message)
       rescue StandardError => e
         DataCollector::Core.error(e.message)
       end
@@ -27,8 +29,6 @@ module DataCollector
       rescue StandardError => e
         DataCollector::Core.error(e.message)
       end
-
-
 
       def run(should_block = false, &block)
           @listener.subscribe(@bunny_queue) do |payload|

@@ -3,27 +3,27 @@ require 'connection_pool'
 module BunnyBurrow
   class Connection
     include Singleton
-    attr_reader :connection, :started
+    attr_reader :connection
     attr_accessor :verify_peer, :connection_name, :rabbitmq_url
 
-    def initialize
-      super
-      @started = false
-    end
     def connection
-      @connection ||= Bunny.new(@rabbitmq_url, verify_peer: @verify_peer, connection_name: @connection_name)
-      unless @started
+      unless @connection
+        @connection = Bunny.new(@rabbitmq_url, verify_peer: @verify_peer, connection_name: @connection_name)
         @connection.start
-        @started = true
       end
+
+      @connection.start unless @connection.connected? || @connection.closed?
+      #@connection.start if @connection.closed?
+
+      #pp @connection.status
 
       @connection
     end
 
     def channel
-      @channel ||= ConnectionPool::Wrapper.new do
-        connection.create_channel
-      end
+      @channel = connection.create_channel unless @channel && @channel.open?
+
+      @channel
     end
   end
 
@@ -41,6 +41,7 @@ module BunnyBurrow
 
       unless @connection
         @connection = Connection.instance.connection
+        @connection.start unless @connection.open?
       end
 
       @connection
@@ -51,7 +52,7 @@ module BunnyBurrow
       Connection.instance.verify_peer = @verify_peer
       Connection.instance.rabbitmq_url = @rabbitmq_url
 
-      @channel ||= Connection.instance.channel
+      @channel = Connection.instance.channel
     end
   end
 end
