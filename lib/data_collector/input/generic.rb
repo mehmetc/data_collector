@@ -1,4 +1,7 @@
+require 'bunny_burrow'
+require_relative '../ext/base'
 require 'listen'
+require 'active_support/core_ext/hash'
 
 module DataCollector
   class Input
@@ -56,7 +59,7 @@ module DataCollector
 
       private
 
-      def create_listener
+      def create_listener(log = false)
         raise DataCollector::Error, 'Please implement a listener'
       end
 

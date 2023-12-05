@@ -1,5 +1,7 @@
 require 'bunny_burrow'
+require_relative '../ext/base'
 require 'json'
+require 'active_support/core_ext/hash'
 
 module DataCollector
   class Output
@@ -9,6 +11,7 @@ module DataCollector
         @options = options
         @running = false
 
+        @name = options[:name] || "output-#{Time.now.to_i}-#{rand(10000)}"
         create_producer
       end
 
@@ -29,7 +32,7 @@ module DataCollector
       end
 
       private
-      def create_producer
+      def create_producer(log = false)
         raise DataCollector::Error, 'Please implement a producer'
       end
 

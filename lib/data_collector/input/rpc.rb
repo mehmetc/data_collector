@@ -1,9 +1,4 @@
 require_relative 'generic'
-require 'bunny_burrow'
-require 'active_support/core_ext/hash'
-require 'ostruct'
-require 'securerandom'
-require 'thread'
 
 module DataCollector
   class Input
@@ -23,6 +18,8 @@ module DataCollector
           @listener.shutdown
           @running = false
         end
+      rescue Bunny::ConnectionAlreadyClosed => e
+        DataCollector::Core.log(e.message)
       rescue StandardError => e
         DataCollector::Core.error(e.message)
       end
@@ -32,8 +29,6 @@ module DataCollector
       rescue StandardError => e
         DataCollector::Core.error(e.message)
       end
-
-
 
       def run(should_block = false, &block)
           @listener.subscribe(@bunny_queue) do |payload|
@@ -64,6 +59,7 @@ module DataCollector
           server.rabbitmq_url = @bunny_uri.to_s
           server.rabbitmq_exchange = @bunny_channel
 
+          server.connection_name = @name
           server.logger = DataCollector::Core.logger if log
         end
 
