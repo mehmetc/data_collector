@@ -49,7 +49,8 @@ module DataCollector
             if v.is_a?(Array) # merge with array
               @data[k] = [@data[k]] + v
             else
-              @data[k] = [@data[k], v]
+              #@data[k] = [@data[k], v]
+              @data[k] = v
             end
           end
         else

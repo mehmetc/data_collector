@@ -22,8 +22,16 @@ module DataCollector
 
       case rule
       when Array
+        odata = {}
         rule.each do |sub_rule|
-          apply_rule(tag, sub_rule, input_data, output_data, options)
+          d=apply_rule(tag, sub_rule, input_data, output_data, options)
+          next if d.nil?
+          odata.merge!(d) {|k,v, n|
+            [v,n].flatten
+          }
+        end
+        odata.each do |k,v|
+          output_data.data[k] = v
         end
         return output_data
       when String
