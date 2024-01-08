@@ -2,6 +2,7 @@
 require 'http'
 require 'open-uri'
 require 'nokogiri'
+require_relative 'ext/nokogiri'
 require 'linkeddata'
 require 'nori'
 require 'uri'
@@ -15,6 +16,7 @@ require 'csv'
 require_relative 'input/dir'
 require_relative 'input/queue'
 require_relative 'input/rpc'
+require 'base64'
 
 # require_relative 'ext/xml_utility_node'
 module DataCollector
@@ -166,11 +168,16 @@ module DataCollector
             data = xml_to_hash(data, options)
           when 'text/xml'
             data = xml_to_hash(data, options)
+          when 'text/html'
+            data = html_to_hash(data, options)
           when 'text/turtle'
             graph = RDF::Graph.new do |graph|
               RDF::Turtle::Reader.new(data) {|reader| graph << reader}
             end
             data = JSON.parse(graph.dump(:jsonld, validate: false, standard_prefixes: true))
+          when /^image/
+            options['file_type'] = file_type
+            data = image_to_data(data, options)
           else
             data = xml_to_hash(data, options)
           end
@@ -196,6 +203,8 @@ module DataCollector
       data = nil
       uri = normalize_uri(uri)
       absolute_path = File.absolute_path(uri)
+      file_type = MIME::Types.type_for(uri).first.to_s
+      options['file_type'] = file_type
       raise DataCollector::Error, "#{uri.to_s} not found" unless File.exist?("#{absolute_path}")
       unless options.has_key?('raw') && options['raw'] == true
         @raw = data = File.read("#{absolute_path}")
@@ -206,6 +215,8 @@ module DataCollector
           data = JSON.parse(data)
         when '.xml'
           data = xml_to_hash(data, options)
+        when '.html'
+          data = html_to_hash(data, options)
         when '.gz'
           tar_data = []
           Minitar.open(Zlib::GzipReader.new(File.open("#{absolute_path}", 'rb'))) do |i|
@@ -232,6 +243,8 @@ module DataCollector
           end #tar
         when '.csv'
           data = csv_to_hash(data, options)
+        when '.jpg', '.png', '.gif'
+          data = image_to_data(data, options)
         else
           raise "Do not know how to process #{uri.to_s}"
         end
@@ -252,6 +265,11 @@ module DataCollector
       DataCollector::Input::Rpc.new(uri, options)
     end
 
+    def image_to_data(data, options = {})
+      file_type = options['file_type']
+      "data:#{file_type};#{Base64.encode64(data)}"
+    end
+
     def xml_to_hash(data, options = {})
       # gsub('&lt;\/', '&lt; /') outherwise wrong XML-parsing (see records lirias1729192 )
       return unless data.is_a?(String)
@@ -262,6 +280,12 @@ module DataCollector
       xml_typecast = options.with_indifferent_access.key?('xml_typecast') ? options.with_indifferent_access['xml_typecast'] : true
       nori = Nori.new(parser: :nokogiri, advanced_typecasting: xml_typecast, strip_namespaces: true, convert_tags_to: lambda { |tag| tag.gsub(/^@/, '_') })
       nori.parse(data)
+    end
+
+    def html_to_hash(data, options = {})
+      return unless data.is_a?(String)
+      html_data = Nokogiri::HTML(data)
+      html_data.to_hash
     end
 
     def csv_to_hash(data, options = {})
