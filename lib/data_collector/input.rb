@@ -140,6 +140,11 @@ module DataCollector
         http_query_options[:body] = options[:body]
 
         http_response = http.follow.post(escape_uri(uri), http_query_options)
+      elsif options.key?(:method) && options[:method].downcase.eql?('put')
+        raise DataCollector::InputError, "No body found, a PUT request needs a body" unless options.key?(:body)
+        http_query_options[:body] = options[:body]
+
+        http_response = http.follow.put(escape_uri(uri), http_query_options)
       else
         http_response = http.follow.get(escape_uri(uri), http_query_options)
       end
@@ -172,7 +177,7 @@ module DataCollector
             data = html_to_hash(data, options)
           when 'text/turtle'
             graph = RDF::Graph.new do |graph|
-              RDF::Turtle::Reader.new(data) {|reader| graph << reader}
+              RDF::Turtle::Reader.new(data) { |reader| graph << reader }
             end
             data = JSON.parse(graph.dump(:jsonld, validate: false, standard_prefixes: true))
           when /^image/
@@ -238,9 +243,9 @@ module DataCollector
                     data << xml_to_hash(d, options)
                   end
                 end
-              end #block
-            end #entry
-          end #tar
+              end # block
+            end # entry
+          end # tar
         when '.csv'
           data = csv_to_hash(data, options)
         when '.jpg', '.png', '.gif'
@@ -267,7 +272,7 @@ module DataCollector
 
     def image_to_data(data, options = {})
       file_type = options['file_type']
-      "data:#{file_type};#{Base64.encode64(data)}"
+      "data:#{file_type};base64,#{Base64.encode64(data)}"
     end
 
     def xml_to_hash(data, options = {})
@@ -290,7 +295,7 @@ module DataCollector
 
     def csv_to_hash(data, options = {})
       csv_option_keys = options.keys & CSV::DEFAULT_OPTIONS.keys
-      all_cvs_options = {headers: true, header_converters: [:downcase, :symbol]}
+      all_cvs_options = { headers: true, header_converters: [:downcase, :symbol] }
 
       csv_option_keys.each do |k|
         all_cvs_options[k] = options[k]
