@@ -31,6 +31,22 @@ class DataCollectorNgTest < Minitest::Test
               {'@' => lambda { |d| d.to_i * 3 }}
           ]
       },
+      'rs_hash_with_multiple_json_filter_and_hashes' => {
+        'multiple_of' => [
+            {'$.id_1' => lambda { |d| 
+              {
+                input: d.to_i,
+                multiple: d.to_i * 2 
+              }
+            }},
+            {'$.id_2' => lambda { |d|  
+              {
+                input: d.to_i,
+                multiple: d.to_i * 3 
+              }
+            }}
+        ]
+    },
       'rs_hash_with_json_filter_and_suffix' => {
           'multiple_of_with_suffix' => {
               '@' => [lambda {|d| d.to_i*2}, 'suffix' => '-multiple_of_2']
@@ -107,6 +123,13 @@ class DataCollectorNgTest < Minitest::Test
     rules_ng.run(RULE_SET['rs_hash_with_multiple_json_filter'], data, output)
     assert_equal(2, output[:multiple_of].size)
     assert_equal('4,6', output[:multiple_of].join(','))
+  end
+  def test_action_hash_with_multiple_json_filter_and_hashes
+    output.clear
+    data = {'id_1' => 2, 'id_2' => 3}
+    rules_ng.run(RULE_SET['rs_hash_with_multiple_json_filter_and_hashes'], data, output)
+    assert_equal(2, output[:multiple_of].size)
+    assert_equal([{:input=>2, :multiple=>4},{:input=>3, :multiple=>9}], output[:multiple_of])
   end
 
   def test_action_hash_with_json_filter_and_suffix

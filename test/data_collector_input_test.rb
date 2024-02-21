@@ -96,5 +96,36 @@ class DataCollectorInputTest < Minitest::Test
     end
   end
 
+  def test_input_from_html_file
+    DataCollector::Input.new.from_uri("file://test/fixtures/test.html") do |data|
+      pp data
+      assert_equal(1, data.size)
+      assert_includes(data[0], :div)
+      assert_includes(data[0][:div], :id)
+      assert_includes(DataCollector::Core.filter(data, '$..span').first, 'children')
+
+    end
+  end
+
+  def test_input_image_with_block
+    stub_request(:get, "https://upload.wikimedia.org/wikipedia/commons/4/47/PiLposterforWikipedia.jpg").
+      with(
+        headers: {
+          'Connection'=>'close',
+          'Host'=>'upload.wikimedia.org',
+          'User-Agent'=>'http.rb/5.1.1'
+        }).
+      to_return(status: 200, body: "", headers: {'Content-Type': 'image/jpg'})
+
+    DataCollector::Input.new.from_uri("file://test/fixtures/test.png") do |data|
+      assert_equal('data:image/png;', data[0..14])
+    end
+
+    DataCollector::Input.new.from_uri("https://upload.wikimedia.org/wikipedia/commons/4/47/PiLposterforWikipedia.jpg") do |data|
+      assert_equal('data:image/jpg;', data[0..14])
+    end
+
+
+  end
 
 end
