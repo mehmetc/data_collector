@@ -36,14 +36,14 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
-  spec.add_runtime_dependency 'activesupport', '~> 7.0'
-  spec.add_runtime_dependency 'http', '~> 5.1'
-  spec.add_runtime_dependency 'json', '~> 2.6'
+  spec.add_runtime_dependency 'activesupport', '~> 7.1'
+  spec.add_runtime_dependency 'http', '~> 5.2'
+  spec.add_runtime_dependency 'json', '~> 2.7'
   spec.add_runtime_dependency 'jsonpath', '~> 1.1'
   spec.add_runtime_dependency 'mime-types', '~> 3.5'
   spec.add_runtime_dependency 'minitar', '= 0.9'
-  spec.add_runtime_dependency 'nokogiri', '~> 1.15'
-  spec.add_runtime_dependency 'nori', '~> 2.6'
+  spec.add_runtime_dependency 'nokogiri', '~> 1.16'
+  spec.add_runtime_dependency 'nori', '~> 2.7'
   spec.add_runtime_dependency 'iso8601', '~> 0.13'
   spec.add_runtime_dependency 'listen', '~> 3.8'
   spec.add_runtime_dependency 'bunny', '~> 2.22'
@@ -52,10 +52,12 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'parse-cron', '~> 0.1'
   spec.add_runtime_dependency 'linkeddata', '~> 3.3'
   spec.add_runtime_dependency 'connection_pool', '~> 2.4'
+  #spec.add_runtime_dependency 'grpc', '~> 1.61'
 
 
   spec.add_development_dependency 'bundler', '~> 2.3'
-  spec.add_development_dependency 'minitest', '~> 5.18'
-  spec.add_development_dependency 'rake', '~> 13.0'
-  spec.add_development_dependency 'webmock', '~> 3.18'
+  spec.add_development_dependency 'minitest', '~> 5.22'
+  spec.add_development_dependency 'rake', '~> 13.1'
+  spec.add_development_dependency 'webmock', '~> 3.22'
+  #spec.add_development_dependency 'grpc-tools', '~> 1.61'
 end

@@ -21,7 +21,7 @@ class DataCollectorInputTest < Minitest::Test
       headers: {
         'Connection' => 'close',
         'Host' => 'www.example.com',
-        'User-Agent' => 'http.rb/5.1.1'
+        'User-Agent' => 'http.rb/5.2.0'
       }).to_return(status: 200, body: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
   <collection>
       <record>apple</record>
@@ -113,7 +113,7 @@ class DataCollectorInputTest < Minitest::Test
         headers: {
           'Connection'=>'close',
           'Host'=>'upload.wikimedia.org',
-          'User-Agent'=>'http.rb/5.1.1'
+          'User-Agent' => 'http.rb/5.2.0'
         }).
       to_return(status: 200, body: "", headers: {'Content-Type': 'image/jpg'})
 
