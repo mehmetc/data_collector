@@ -29,8 +29,8 @@ module DataCollector
         absolute_path = File.absolute_path("#{@uri.host}#{@uri.path}")
         raise DataCollector::Error, "#{@uri.to_s} not found" unless File.exist?(absolute_path)
 
-        @listener ||= Listen.to(absolute_path, @options) do |modified, added, _|
-          files = added | modified
+        @listener ||= Listen.to(absolute_path, @options) do |modified, added, removed|
+          files = added | modified | removed
           files.each do |filename|
             handle_on_message(@input, @output, filename)
           end

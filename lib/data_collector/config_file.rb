@@ -53,12 +53,13 @@ module DataCollector
     end
 
     def self.init
+      @config_file_name = 'config.yml' if @config_file_name.nil?
       discover_config_file_path
       raise Errno::ENOENT, "#{@config_file_path}/#{@config_file_name} Not Found. Set path to #{@config_file_name}" unless File.exist?("#{@config_file_path}/#{@config_file_name}")
 
       ftime = File.exist?("#{@config_file_path}/#{@config_file_name}") ? File.mtime("#{@config_file_path}/#{@config_file_name}") : nil
-      if @config.empty? || @mtime != ftime
-        config = YAML::load_file("#{@config_file_path}/#{@config_file_name}", permitted_classes: [Time, Symbol])
+      if @config.nil? || @config.empty? || @mtime != ftime
+        config = YAML::load_file("#{@config_file_path}/#{@config_file_name}", aliases: true, permitted_classes: [Time, Symbol])
         @config = process(config)
       end
     end
