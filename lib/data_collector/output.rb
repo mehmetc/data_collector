@@ -167,7 +167,8 @@ module DataCollector
 
       data[:response_date] = DateTime.now.xmlschema
 
-      ERB.new(File.read(erb_file), 0, '>').result(binding)
+      #ERB.new(File.read(erb_file), 0, '>').result(binding)
+      ERB.new(File.read(erb_file),  trim_mode: '-').result(binding)
     rescue Exception => e
       raise "unable to transform to text: #{e.message}"
     end
