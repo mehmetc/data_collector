@@ -29,60 +29,64 @@ module DataCollector
 
     def from_uri(source, options = {}, &block)
       block_consumed = false
-      source = CGI.unescapeHTML(source)
-      @logger.info("Reading #{source}")
-      raise DataCollector::Error, 'from_uri expects a scheme like file:// of https://' unless source =~ /:\/\//
+      data = nil
+      if source.is_a?(StringIO)
+        data = from_stringio(source, options)
+      else
+        source = CGI.unescapeHTML(source)
+        @logger.info("Reading #{source}")
+        raise DataCollector::Error, 'from_uri expects a scheme like file:// of https://' unless source =~ /:\/\//
 
-      scheme, path = source.split('://')
-      source = "#{scheme}://#{URI.encode_www_form_component(path)}"
-      uri = URI(source)
-      begin
-        data = nil
-        case uri.scheme
-        when 'http'
-          data = from_http(uri, options)
-        when 'https'
-          data = from_https(uri, options)
-        when 'file'
-          absolute_path = File.absolute_path("#{URI.decode_www_form_component("#{uri.host}#{uri.path}")}")
-          if File.directory?(absolute_path)
-            return from_dir(uri, options)
-          else
-            if block_given?
-              data = from_file(uri, options, &block)
-              block_consumed = true if data.is_a?(TrueClass)
+        scheme, path = source.split('://')
+        source = "#{scheme}://#{URI.encode_www_form_component(path)}"
+        uri = URI(source)
+        begin
+          case uri.scheme
+          when 'http'
+            data = from_http(uri, options)
+          when 'https'
+            data = from_https(uri, options)
+          when 'file'
+            absolute_path = File.absolute_path("#{URI.decode_www_form_component("#{uri.host}#{uri.path}")}")
+            if File.directory?(absolute_path)
+              return from_dir(uri, options)
             else
-              data = from_file(uri, options)
+              if block_given?
+                data = from_file(uri, options, &block)
+                block_consumed = true if data.is_a?(TrueClass)
+              else
+                data = from_file(uri, options)
+              end
             end
-          end
-        when /amqp/
-          if uri.scheme =~ /^rpc/
-            data = from_rpc(uri, options)
+          when /amqp/
+            if uri.scheme =~ /^rpc/
+              data = from_rpc(uri, options)
+            else
+              data = from_queue(uri, options)
+            end
           else
-            data = from_queue(uri, options)
+            raise "Do not know how to process #{source}"
           end
-        else
-          raise "Do not know how to process #{source}"
-        end
 
-        data = data.nil? ? 'no data found' : data
-
-        if block_given? && !block_consumed
-          yield data
-        else
-          data
         end
-      rescue DataCollector::InputError => e
-        @logger.error(e.message)
-        raise e
-      rescue DataCollector::Error => e
-        @logger.error(e.message)
-        nil
-      rescue StandardError => e
-        @logger.error(e.message)
-        puts e.backtrace.join("\n")
-        nil
       end
+      data = data.nil? ? 'no data found' : data
+
+      if block_given? && !block_consumed
+        yield data
+      else
+        data
+      end
+    rescue DataCollector::InputError => e
+      @logger.error(e.message)
+      raise e
+    rescue DataCollector::Error => e
+      @logger.error(e.message)
+      nil
+    rescue StandardError => e
+      @logger.error(e.message)
+      puts e.backtrace.join("\n")
+      nil
     end
 
     private
@@ -202,6 +206,23 @@ module DataCollector
 
       #[data, http_response.code]
       data
+    end
+
+    def from_stringio(sio, options = {}, &block)
+      raise DataCollector::InputError, "No IO input" unless sio.is_a?(StringIO)
+      raise DataCollector::InputError, "content_type option not supplied" unless options.key?(:content_type)
+
+      preferred_extension = MIME::Types[options[:content_type]].first.extensions.first || 'txt'
+
+      file = Tempfile.new(["dc_", ".#{preferred_extension}"])
+      begin
+        sio.rewind
+        file.write(sio.read)
+        file.close
+        from_file(URI("file://#{file.path}"))
+      ensure
+        file.unlink
+      end
     end
 
     def from_file(uri, options = {}, &block)

@@ -128,4 +128,22 @@ class DataCollectorInputTest < Minitest::Test
 
   end
 
+  def test_input_stringio
+    i=DataCollector::Input.new
+    a='{"a":1}'
+    c = i.from_uri(StringIO.new(a), content_type: 'application/json')
+
+    assert_equal(1, c['a'])
+  end
+
+  def test_input_stringio_no_content_type
+    i=DataCollector::Input.new
+    a='{"a":1}'
+
+    assert_raises(DataCollector::InputError) do
+      c = i.from_uri(StringIO.new(a))
+    end
+
+  end
+
 end
