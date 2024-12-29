@@ -95,6 +95,7 @@ A push happens when new data is created in a directory, message queue, ...
     input.from_uri("http://www.libis.be/record.jsonld", content_type: 'application/ld+json')
     input.from_uri("https://www.w3.org/TR/rdf12-turtle/examples/example1.ttl")
     input.from_uri("https://dbpedia.org/sparql", body: "query=SELECT * WHERE {?sub ?pred ?obj} LIMIT 10", method:"POST", headers: {accept: "text/turtle"})
+    input.from_uri(StringIO.new(File.read('myrecords.xml')), content_type: 'application/xml' )
 
 # read data from a RabbitMQ queue
     listener = input.from_uri('amqp://user:password@localhost?channel=hello&queue=world')

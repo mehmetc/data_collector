@@ -52,6 +52,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'parse-cron', '~> 0.1'
   spec.add_runtime_dependency 'linkeddata', '~> 3.3'
   spec.add_runtime_dependency 'connection_pool', '~> 2.4'
+  spec.add_runtime_dependency 'open-uri-and-write', '~> 0.1.0'
   #spec.add_runtime_dependency 'grpc', '~> 1.61'
 
 

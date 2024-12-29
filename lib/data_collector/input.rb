@@ -180,10 +180,7 @@ module DataCollector
           when 'text/html'
             data = html_to_hash(data, options)
           when 'text/turtle'
-            graph = RDF::Graph.new do |graph|
-              RDF::Turtle::Reader.new(data) { |reader| graph << reader }
-            end
-            data = JSON.parse(graph.dump(:jsonld, validate: false, standard_prefixes: true))
+            data = rdf_to_hash(data, options)
           when /^image/
             options['file_type'] = file_type
             data = image_to_data(data, options)
@@ -206,6 +203,13 @@ module DataCollector
 
       #[data, http_response.code]
       data
+    end
+
+    def rdf_to_hash(data, options = {})
+      graph = RDF::Graph.new do |graph|
+        RDF::Turtle::Reader.new(data) { |reader| graph << reader }
+      end
+      data = JSON.parse(graph.dump(:jsonld, validate: false, standard_prefixes: true))
     end
 
     def from_stringio(sio, options = {}, &block)
@@ -271,6 +275,8 @@ module DataCollector
           data = csv_to_hash(data, options)
         when '.jpg', '.png', '.gif'
           data = image_to_data(data, options)
+        when '.ttl'
+          data = rdf_to_hash(data, options)
         else
           raise "Do not know how to process #{uri.to_s}"
         end

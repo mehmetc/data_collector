@@ -1,3 +1,5 @@
+require_relative 'data_collector/ext/x-open-uri-and-write'
+
 class ProxyLogger
   attr_reader :targets
   def initialize(*targets)
