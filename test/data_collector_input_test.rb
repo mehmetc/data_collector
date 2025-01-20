@@ -136,6 +136,43 @@ class DataCollectorInputTest < Minitest::Test
     assert_equal(1, c['a'])
   end
 
+  def test_input_stringio_shacl
+    i=DataCollector::Input.new
+    shacl = %(
+@prefix example: <https://example.com/> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+
+example:CarShape
+        a sh:NodeShape;
+        sh:description  "Abstract shape that describes a car entity" ;
+        sh:targetClass  example:Car;
+        sh:node         example:Car;
+        sh:name         "Car";
+        sh:property     [ sh:path        example:color ;
+                          sh:name        "color" ;
+                          sh:description "Color of the car" ;
+                          sh:datatype    xsd:string ;
+                          sh:minCount    1 ;
+                          sh:maxCount    1 ; ];
+        sh:property     [ sh:path        example:brand ;
+                          sh:name        "brand" ;
+                          sh:description "Brand of the car" ;
+                          sh:datatype    xsd:string ;
+                          sh:minCount    1 ;
+                          sh:maxCount    1 ; ] .
+)
+    c = i.from_uri(StringIO.new(shacl), content_type: 'text/turtle')
+    assert_kind_of(Hash, c)
+    assert_includes(c.keys, '@context')
+    assert_includes(c.keys, '@graph')
+    assert_kind_of(Array, c['@graph'])
+    assert_equal(3, c['@graph'].size)
+    assert_includes(c['@graph'].map{|m| m['sh:name']}, 'Car')
+    assert_includes(c['@graph'].map{|m| m['sh:name']}, 'color')
+    assert_includes(c['@graph'].map{|m| m['sh:name']}, 'brand')
+  end
+
   def test_input_stringio_no_content_type
     i=DataCollector::Input.new
     a='{"a":1}'
@@ -143,7 +180,6 @@ class DataCollectorInputTest < Minitest::Test
     assert_raises(DataCollector::InputError) do
       c = i.from_uri(StringIO.new(a))
     end
-
   end
 
 end
