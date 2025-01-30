@@ -155,7 +155,21 @@ module DataCollector
 
       case http_response.code
       when 200..299
-        @raw = data = http_response.body.to_s
+
+        if http_response.code == 206
+          @logger.debug "HTTP response 206 Partial Content"
+          data = http_response.body.readpartial
+          loop do
+            partial_data = http_response.body.readpartial
+            if partial_data.nil? || partial_data.empty?
+              break
+            end
+            data = data + partial_data.to_s
+          end
+          @raw = data
+        else
+          @raw = data = http_response.body.to_s
+        end
 
         # File.open("#{rand(1000)}.xml", 'wb') do |f|
         #   f.puts data
