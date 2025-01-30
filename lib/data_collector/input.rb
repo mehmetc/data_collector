@@ -203,8 +203,6 @@ module DataCollector
           end
         end
 
-        raise '206 Partial Content' if http_response.code == 206
-
       when 401
         raise DataCollector::InputError, 'Unauthorized'
       when 403
