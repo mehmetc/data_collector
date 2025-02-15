@@ -32,6 +32,7 @@ module Kernel
       end
     else
       mode, options = rest
+      options = {} unless options.is_a?(Hash)
       open_uri_and_write_original(name.to_s, mode, **options, &block)
     end
   end

@@ -53,7 +53,10 @@ class File
         end
       end
 
-      self.original_open(name, *rest, &block)
+      #self.original_open(name, *rest, &block)
+      mode, options = rest
+      options = {} unless options.is_a?(Hash)
+      self.original_open(name.to_s, mode, **rest, &block)
     end
   end
 
