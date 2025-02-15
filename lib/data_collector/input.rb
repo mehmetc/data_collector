@@ -104,8 +104,6 @@ module DataCollector
 
       http = HTTP
 
-      # http.use(logging: {logger: @logger})
-
       if options.key?(:user) && options.key?(:password)
         @logger.debug "Set Basic_auth"
         user = options[:user]
@@ -157,13 +155,9 @@ module DataCollector
       when 200..299
         @raw = data = http_response.body.to_s
 
-        # File.open("#{rand(1000)}.xml", 'wb') do |f|
-        #   f.puts data
-        # end
-
         file_type = options.with_indifferent_access.has_key?(:content_type) ? options.with_indifferent_access[:content_type] : file_type_from(http_response.headers)
 
-        unless options.with_indifferent_access.has_key?(:raw) && options.with_indifferent_access[:raw] == true
+        unless options.with_indifferent_access.has_key?(:raw) && options.with_indifferent_access[:raw] == true && !['text/turtle', 'application/rdf+xml'].include?(file_type)
           case file_type
           when 'application/ld+json'
             data = JSON.parse(data)
@@ -180,6 +174,8 @@ module DataCollector
           when 'text/html'
             data = html_to_hash(data, options)
           when 'text/turtle'
+            data = rdf_to_hash(data, options)
+          when 'application/rdf+xml'
             data = rdf_to_hash(data, options)
           when /^image/
             options['file_type'] = file_type
@@ -206,9 +202,11 @@ module DataCollector
     end
 
     def rdf_to_hash(data, options = {})
-      graph = RDF::Graph.new do |graph|
-        RDF::Turtle::Reader.new(data) { |reader| graph << reader }
-      end
+      format = options[:file_type] || options[:content_type] || 'text/turtle'
+      graph = RDF::Graph.new{ |graph| RDF::Format.content_types[format].first.reader.new(data){|reader| graph << reader}}
+
+      return graph if options.with_indifferent_access[:raw]
+
       data = JSON.parse(graph.dump(:jsonld, validate: false, standard_prefixes: true))
     end
 
@@ -223,7 +221,7 @@ module DataCollector
         sio.rewind
         file.write(sio.read)
         file.close
-        from_file(URI("file://#{file.path}"))
+        from_file(URI("file://#{file.path}"), options)
       ensure
         file.unlink
       end
@@ -234,7 +232,7 @@ module DataCollector
       uri = normalize_uri(uri)
       absolute_path = File.absolute_path(uri)
       file_type = MIME::Types.type_for(uri).first.to_s
-      options['file_type'] = file_type
+      options['file_type'] = options[:content_type] || file_type
       raise DataCollector::Error, "#{uri.to_s} not found" unless File.exist?("#{absolute_path}")
       unless options.has_key?('raw') && options['raw'] == true
         @raw = data = File.read("#{absolute_path}")
@@ -276,6 +274,8 @@ module DataCollector
         when '.jpg', '.png', '.gif'
           data = image_to_data(data, options)
         when '.ttl'
+          data = rdf_to_hash(data, options)
+        when '.rdf'
           data = rdf_to_hash(data, options)
         else
           raise "Do not know how to process #{uri.to_s}"
