@@ -32,6 +32,8 @@ module DataCollector
       data = nil
       if source.is_a?(StringIO)
         data = from_stringio(source, options)
+      elsif source.respond_to?(:read)
+        data = from_tempfile(source, options)
       else
         source = CGI.unescapeHTML(source)
         @logger.info("Reading #{source}")
@@ -222,6 +224,17 @@ module DataCollector
       data = JSON.parse(graph.dump(:jsonld, validate: false, standard_prefixes: true))
     end
 
+    def from_tempfile(tempfile, options = {}, &block)
+      #file = Tempfile.new(["dc_", ".#{preferred_extension}"])
+      begin
+        tempfile.rewind
+        #file.write(temp_input_file.read)
+        #file.close
+        from_file(URI("file://#{tempfile.path}"), options)
+        #ensure
+        #file.unlink
+      end
+    end
     def from_stringio(sio, options = {}, &block)
       raise DataCollector::InputError, "No IO input" unless sio.is_a?(StringIO)
       raise DataCollector::InputError, "content_type option not supplied" unless options.key?(:content_type)
@@ -244,11 +257,15 @@ module DataCollector
       uri = normalize_uri(uri)
       absolute_path = File.absolute_path(uri)
       file_type = MIME::Types.type_for(uri).first.to_s
-      options['file_type'] = options[:content_type] || file_type
+      file_type = File.extname(absolute_path) if file_type.empty?
+      options['file_type'] = MIME::Types[(options[:content_type] || file_type)].first.preferred_extension
+
+      options['file_extention'] = ".#{options['file_type']}"
       raise DataCollector::Error, "#{uri.to_s} not found" unless File.exist?("#{absolute_path}")
       unless options.has_key?('raw') && options['raw'] == true
         @raw = data = File.read("#{absolute_path}")
-        case File.extname(absolute_path)
+
+        case options['file_extention']
         when '.jsonld'
           data = JSON.parse(data)
         when '.json'

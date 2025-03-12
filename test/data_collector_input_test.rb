@@ -118,7 +118,7 @@ class DataCollectorInputTest < Minitest::Test
       to_return(status: 200, body: "", headers: {'Content-Type': 'image/jpg'})
 
     DataCollector::Input.new.from_uri("file://test/fixtures/test.png") do |data|
-      assert_equal('data:image/png;', data[0..14])
+      assert_equal('data:png;base64', data[0..14])
     end
 
     DataCollector::Input.new.from_uri("https://upload.wikimedia.org/wikipedia/commons/4/47/PiLposterforWikipedia.jpg") do |data|
@@ -134,6 +134,22 @@ class DataCollectorInputTest < Minitest::Test
     c = i.from_uri(StringIO.new(a), content_type: 'application/json')
 
     assert_equal(1, c['a'])
+  end
+
+  def test_tempfile
+    stub_request(:get, "https://api.boekenbank.be/api/products?isbns=9789046528143,9789046528129&key=example").
+      with(
+        headers: {
+          'Accept'=>'*/*',
+          'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+          'User-Agent'=>'Ruby'
+        }).
+      to_return(status: 200, body: File.read('./test/fixtures/onix.xml'), headers: {})
+
+    i=DataCollector::Input.new
+    c = i.from_uri(URI.open('https://api.boekenbank.be/api/products?isbns=9789046528143,9789046528129&key=example'),  content_type: 'application/xml')
+
+    pp c
   end
 
   def test_input_stringio_shacl
