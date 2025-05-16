@@ -403,6 +403,14 @@ Engine directives:
 
 The config object points to a configuration file (default: "config.yml").
 
+__Example__ config.yml
+```yaml
+cache: "/tmp"
+password: ${SECRET}
+active: true
+```
+
+__Usage__
 ```ruby
 # Set config path and filename
 config.path = "/path/to/my/config"
