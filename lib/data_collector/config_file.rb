@@ -10,7 +10,7 @@ module DataCollector
     @mtime = nil
 
     def self.version
-      '0.0.3'
+      '0.0.4'
     end
 
     def self.name
@@ -59,7 +59,8 @@ module DataCollector
 
       ftime = File.exist?("#{@config_file_path}/#{@config_file_name}") ? File.mtime("#{@config_file_path}/#{@config_file_name}") : nil
       if @config.nil? || @config.empty? || @mtime != ftime
-        config = YAML::load_file("#{@config_file_path}/#{@config_file_name}", aliases: true, permitted_classes: [Time, Symbol])
+        # config = YAML::load_file("#{@config_file_path}/#{@config_file_name}", aliases: true, permitted_classes: [Time, Symbol])
+        config = interpret_yaml_with_expressions("#{@config_file_path}/#{@config_file_name}", ENV)
         @config = process(config)
       end
     end
@@ -92,5 +93,36 @@ module DataCollector
     private_class_method :init
     private_class_method :discover_config_file_path
     private_class_method :process
+
+    private
+    def self.interpret_yaml_with_expressions(yaml_file, variables = {})
+      # Read the YAML file content
+      content = File.read(yaml_file)
+
+      # Process any :key: "${expression}" patterns
+      processed_content = content.gsub(/:key:\s*"?\$\{([^}]+)\}"?/) do |match|
+        expression = $1.strip
+
+        # Evaluate the expression using the provided variables
+        if variables.key?(expression)
+          # Replace with the variable value
+          match.gsub("${#{expression}}", variables[expression].to_s)
+        elsif expression.include?('.')
+          # Handle dot notation for nested variables
+          parts = expression.split('.')
+          value = variables
+          parts.each do |part|
+            value = value[part.to_sym] if value.is_a?(Hash) && value.key?(part.to_sym)
+          end
+          value.to_s
+        else
+          # Keep the original if we can't evaluate
+          match
+        end
+      end
+
+      # Parse the processed YAML content
+      YAML.load(processed_content, aliases: true, permitted_classes: [Time, Symbol])
+    end
   end
 end

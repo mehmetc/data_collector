@@ -138,7 +138,9 @@ module DataCollector
     module_function :error
 
     def logger(*destinations)
-      @logger ||= begin
+      @logger if @logger && (@log_destination.eql?(destinations.flatten) || destinations.empty? || destinations.nil?)
+      @log_destination = destinations.flatten
+      @logger =  begin
                     destinations = STDOUT if destinations.nil? || destinations.empty?
                     Logger.new(ProxyLogger.new(destinations))
                   rescue StandardError => e
