@@ -126,10 +126,6 @@ module DataCollector
         output_data.size == 1 &&
         not((output_data.first.is_a?(Array) || output_data.first.is_a?(Hash)))
         output_data = output_data.first
-        # elsif output_data.is_a?(Array) &&
-        #     output_data.size == 1 &&
-        #     (output_data.first.is_a?(Array) || output_data.first.is_a?(Hash))
-        #   output_data = output_data.first
       end
 
       if options.with_indifferent_access.key?('_no_array_with_one_element') &&
