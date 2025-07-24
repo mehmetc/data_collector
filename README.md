@@ -397,7 +397,8 @@ rules.run(RULE_SETS['rs_hash_with_json_filter_and_option'], data, output, {'id' 
 ```
 
 Engine directives:
-- `no_array_with_one_element`: If true and result is a single-element array, return just the element (default: false)
+- `no_array_with_one_element`: If true and result is a single-element array/hash, return just the element (default: false)
+- `_no_array_with_one_literal`: If result is a single-element is in an array, return the element (default: false)
 
 ### Config
 

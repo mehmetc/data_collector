@@ -24,13 +24,13 @@ module DataCollector
       when Array
         odata = {}
         rule.each do |sub_rule|
-          d=apply_rule(tag, sub_rule, input_data, output_data, options)
+          d = apply_rule(tag, sub_rule, input_data, output_data, options)
           next if d.nil?
-          odata.merge!(d) {|k,v, n|
-            [v,n].flatten
+          odata.merge!(d) { |k, v, n|
+            [v, n].flatten
           }
         end
-        odata.each do |k,v|
+        odata.each do |k, v|
           output_data.data[k] = v
         end
         return output_data
@@ -120,13 +120,20 @@ module DataCollector
 
       output_data.compact! if output_data.is_a?(Array)
       output_data.flatten! if output_data.is_a?(Array)
-      if output_data.is_a?(Array) &&
+      if options.with_indifferent_access.key?('_no_array_with_one_literal') &&
+        options.with_indifferent_access['_no_array_with_one_literal'] &&
+        output_data.is_a?(Array) &&
         output_data.size == 1 &&
-        (output_data.first.is_a?(Array) || output_data.first.is_a?(Hash))
+        not((output_data.first.is_a?(Array) || output_data.first.is_a?(Hash)))
         output_data = output_data.first
+        # elsif output_data.is_a?(Array) &&
+        #     output_data.size == 1 &&
+        #     (output_data.first.is_a?(Array) || output_data.first.is_a?(Hash))
+        #   output_data = output_data.first
       end
 
-      if options.with_indifferent_access.key?('_no_array_with_one_element') && options.with_indifferent_access['_no_array_with_one_element'] &&
+      if options.with_indifferent_access.key?('_no_array_with_one_element') &&
+        options.with_indifferent_access['_no_array_with_one_element'] &&
         output_data.is_a?(Array) && output_data.size == 1
         output_data = output_data.first
       end
