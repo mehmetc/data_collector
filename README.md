@@ -403,7 +403,15 @@ Engine directives:
 ### Config
 
 The config object points to a configuration file (default: "config.yml").
+- Configuration is automatically reloaded when the file is modified
+- All hash keys are converted to symbols (:key instead of "key")
+- Writing values with []= immediately persists changes to the YAML file
+- The class uses a singleton pattern - you cannot create instances with .new
+- Environment variable substitution uses ${VAR_NAME} syntax in the YAML file
 
+```shell
+export SECRET=my_secret
+```
 __Example__ config.yml
 ```yaml
 cache: "/tmp"

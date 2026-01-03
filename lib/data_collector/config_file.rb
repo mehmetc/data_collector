@@ -22,6 +22,7 @@ module DataCollector
     end
 
     def self.path
+      init if @config_file_path.empty?
       @config_file_path
     end
 
@@ -52,6 +53,16 @@ module DataCollector
       @config.keys
     end
 
+    def self.raw
+      init
+      @config
+    end
+
+    def self.dig(*args)
+      init
+      @config.dig(*args)
+    end
+
     def self.init
       @config_file_name = 'config.yml' if @config_file_name.nil?
       discover_config_file_path
@@ -66,6 +77,8 @@ module DataCollector
     end
 
     def self.discover_config_file_path
+      @config_file_name = ENV['CONFIG_FILE_NAME'] if ENV.key?('CONFIG_FILE_NAME')
+
       if @config_file_path.nil? || @config_file_path.empty?
         if ENV.key?('CONFIG_FILE_PATH')
           @config_file_path = ENV['CONFIG_FILE_PATH']
