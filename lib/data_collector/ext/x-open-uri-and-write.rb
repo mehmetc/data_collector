@@ -8,7 +8,7 @@ require 'open-uri-and-write/handle'
 require 'open-uri-and-write/usernames'
 require 'open-uri-and-write/credentials_store'
 require_relative 'file'
-require 'open-uri-and-write/dir_extensions'
+require_relative 'dir'
 #require 'open-uri-and-write/kernel_extensions'
 
 # Kernel extensions
