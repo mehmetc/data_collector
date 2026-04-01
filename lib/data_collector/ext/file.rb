@@ -9,7 +9,7 @@ class File
   end
 
   def self.exist?(name)
-    if(name[/https?:\/\//])
+    if(name.respond_to?(:to_s) && name.to_s[/https?:\/\//])
       dav = OpenUriAndWrite::CredentialsStore.get_connection_for_url(name)
       dav.exist?(name)
     else
@@ -25,19 +25,19 @@ class File
       filenames = names
     end
     filenames.each do |filename|
-      if(filename[/^(https?):\/\//])
+      if(filename.respond_to?(:to_s) && filename.to_s[/^(https?):\/\//])
         dav = OpenUriAndWrite::CredentialsStore.get_connection_for_url(filename)
         dav.delete(filename)
       else
         self.original_delete(filename)
       end
-    end
+    end.size
   end
 
   def self.open(name, *rest, &block)
     if name.respond_to?(:open)
       name.open(*rest, &block)
-    elsif name.respond_to?(:to_s) and name[/^(https?):\/\//] and rest.size > 0 and rest.first.to_s[/^w/]
+    elsif name.respond_to?(:to_s) and name.to_s[/^(https?):\/\//] and rest.size > 0 and rest.first.to_s[/^w/]
       webdav_agent = OpenUriAndWrite::Handle.new(name, rest)
       if(block)
         yield webdav_agent

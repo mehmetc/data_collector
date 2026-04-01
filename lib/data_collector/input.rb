@@ -23,6 +23,8 @@ module DataCollector
   class Input
     attr_reader :raw
 
+    HTTP_TIMEOUT = 30 # seconds — connect + read + write
+
     def initialize
       @logger = Logger.new(STDOUT)
     end
@@ -104,18 +106,19 @@ module DataCollector
         HTTP.default_options = HTTP::Options.new(features: { logging: { logger: @logger } })
       end
 
-      http = HTTP
+      timeout = options.fetch(:timeout, HTTP_TIMEOUT)
+      http = HTTP.timeout(connect: timeout, read: timeout, write: timeout)
 
       if options.key?(:user) && options.key?(:password)
         @logger.debug "Set Basic_auth"
         user = options[:user]
         password = options[:password]
-        http = HTTP.basic_auth(user: user, pass: password)
+        http = http.basic_auth(user: user, pass: password)
       elsif options.key?(:bearer_token)
         @logger.debug "Set authorization bearer token"
         bearer = options[:bearer_token]
         bearer = "Bearer #{bearer}" unless bearer =~ /^Bearer /i
-        http = HTTP.auth(bearer)
+        http = http.auth(bearer)
       end
 
       if options.key?(:cookies)
